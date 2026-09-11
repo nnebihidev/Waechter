@@ -1,0 +1,222 @@
+// Pflichtwächter data model.
+// DSGVO by design: raw HTML has an explicit expiry (data.retention job),
+// evidence excerpts are capped in code, users can be hard-deleted via
+// deletionRequestedAt within 72 hours.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum PlanType {
+  REPORT
+  WATCHER
+  AGENCY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  GRACE
+  PAUSED
+  CANCELED
+}
+
+enum FindingSeverity {
+  BLOCKER
+  WARN
+  INFO
+}
+
+enum ConsentKind {
+  WIDERRUF_VERZICHT
+  AGB_AKZEPTIERT
+  AVV_AKZEPTIERT
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastLoginAt         DateTime?
+  // Set when the user requests account deletion; the retention job
+  // hard-deletes the account and all scans within 72 hours.
+  deletionRequestedAt DateTime?
+  stripeCustomerId    String?   @unique
+
+  sites         Site[]
+  tokens        MagicLinkToken[]
+  purchases     Purchase[]
+  subscriptions Subscription[]
+  consents      ConsentLog[]
+}
+
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  email     String
+  // Only the hash is stored; the raw token lives in the emailed link.
+  tokenHash String    @unique
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model Site {
+  id               String    @id @default(cuid())
+  host             String
+  ownerId          String?
+  owner            User?     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  monitoringActive Boolean   @default(false)
+  nextScanAt       DateTime?
+  lastScanAt       DateTime?
+
+  scans Scan[]
+
+  @@unique([host, ownerId])
+  @@index([nextScanAt])
+}
+
+model Scan {
+  id              String     @id @default(cuid())
+  siteId          String?
+  site            Site?      @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  inputUrl        String
+  finalUrl        String?
+  status          ScanStatus @default(QUEUED)
+  score           Int?
+  trafficLight    String?
+  // Hashed requester IP for the 5-scans/IP/day rate limit; never plaintext.
+  requesterIpHash String?
+  // Content hash for the 24h scan cache (same URL + same content).
+  contentHash     String?
+  // DriftSnapshot JSON from packages/rules for G1-G3 diffs.
+  driftSnapshot   Json?
+  error           String?
+  createdAt       DateTime   @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  pages    ScanPage[]
+  findings Finding[]
+
+  @@index([siteId, createdAt])
+  @@index([requesterIpHash, createdAt])
+  @@index([contentHash, createdAt])
+}
+
+model ScanPage {
+  id               String    @id @default(cuid())
+  scanId           String
+  scan             Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  url              String
+  // impressum | datenschutz | agb | widerruf | cookies | homepage
+  kind             String?
+  httpStatus       Int
+  textHash         String?
+  // Raw HTML is transient: the data.retention job nulls it after
+  // RETENTION_HTML_DAYS (default 30) via rawHtmlExpiresAt.
+  rawHtml          String?
+  rawHtmlExpiresAt DateTime?
+  fetchedAt        DateTime  @default(now())
+
+  @@index([scanId])
+  @@index([rawHtmlExpiresAt])
+}
+
+model Finding {
+  id        String          @id @default(cuid())
+  scanId    String
+  scan      Scan            @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  ruleId    String
+  severity  FindingSeverity
+  // Evidence array from packages/rules; excerpts capped at 500 chars.
+  evidence  Json
+  createdAt DateTime        @default(now())
+
+  @@index([scanId])
+}
+
+model Purchase {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scanId                String?
+  stripeSessionId       String    @unique
+  stripePaymentIntentId String?
+  amountCents           Int
+  currency              String    @default("eur")
+  // pending | paid | refunded
+  status                String
+  // Timestamp of the explicit pre-purchase consent that the Widerrufsrecht
+  // lapses once the digital report is fully delivered (§ 356 Abs. 5 BGB).
+  widerrufConsentAt     DateTime?
+  createdAt             DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String             @unique
+  plan                 PlanType
+  status               SubscriptionStatus
+  currentPeriodEnd     DateTime?
+  // Failed payment: 7-day grace, then crawls pause; data kept 30 days.
+  graceUntil           DateTime?
+  domainQuota          Int                @default(1)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+}
+
+model ConsentLog {
+  id          String      @id @default(cuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email       String?
+  kind        ConsentKind
+  // Version identifier of the accepted legal text (e.g. "widerruf-2026-01").
+  textVersion String
+  ipHash      String?
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String    @unique
+  type        String
+  payload     Json
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([provider, receivedAt])
+}
+
+model WorkerHeartbeat {
+  name       String   @id
+  lastBeatAt DateTime
+}
