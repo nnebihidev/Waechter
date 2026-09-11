@@ -1,0 +1,72 @@
+# Full Pflichtwächter stack for a single EU VPS.
+# Run from the repo root:  docker compose -f infra/docker-compose.yml up --build -d
+# Reads the repo-root .env (see .env.example).
+
+name: pflichtwaechter
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pflichtwaechter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: pflichtwaechter
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pflichtwaechter -d pflichtwaechter']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Runs migrations on start, then the job loop (heartbeat now; crawler,
+  # e-mails and retention in later phases).
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.worker
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql://pflichtwaechter:${POSTGRES_PASSWORD}@postgres:5432/pflichtwaechter
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql://pflichtwaechter:${POSTGRES_PASSWORD}@postgres:5432/pflichtwaechter
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      worker:
+        condition: service_started
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
