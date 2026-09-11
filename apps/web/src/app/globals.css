@@ -2,25 +2,57 @@
 @plugin '@tailwindcss/typography';
 
 /*
- * Design tokens: off-white paper, ink text, one accent (deep pine green).
- * Looks like a competent Fachdienst, not a startup toy.
+ * Design system: "digitaler Fachdienst" — paper ground, ink text, deep pine
+ * accent, mono for technical data, hairline borders. Severity colors are
+ * AA-checked against their tinted backgrounds.
  */
 @theme {
+  /* Backgrounds */
   --color-paper: #faf8f4;
   --color-card: #ffffff;
-  --color-ink: #1c2420;
-  --color-muted: #5b6660;
-  --color-line: #e4dfd5;
-  --color-pine: #1b4d3e;
-  --color-pine-dark: #143b2f;
-  --color-pine-light: #e9f1ed;
-  --color-ampel-rot: #b42318;
-  --color-ampel-gelb: #b25e09;
-  --color-ampel-gruen: #1b6d47;
+  --color-subtle: #f0ece1;
 
+  /* Text */
+  --color-ink: #1c2420;
+  --color-muted: #4a5c54;
+
+  /* Borders */
+  --color-line: #e2dcd0;
+  --color-strong: #1c2420;
+
+  /* Accent */
+  --color-pine: #1b4d3e;
+  --color-pine-dark: #12382d;
+
+  /* Severity: Rot / Gelb / Grün (text · bg · border) */
+  --color-rot: #b3261e;
+  --color-rot-bg: #f9dedc;
+  --color-rot-line: #f2b8b5;
+  --color-gelb: #8c5a00;
+  --color-gelb-bg: #ffefd1;
+  --color-gelb-line: #e6c27a;
+  --color-gruen: #146c2e;
+  --color-gruen-bg: #d3eadd;
+  --color-gruen-line: #9fccb3;
+
+  /* Radii */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* Shadows */
+  --shadow-card:
+    0 2px 4px -1px rgba(28, 36, 32, 0.04), 0 4px 6px -1px rgba(28, 36, 32, 0.06);
+  --shadow-floating:
+    0 10px 15px -3px rgba(28, 36, 32, 0.08), 0 4px 6px -4px rgba(28, 36, 32, 0.04);
+
+  /* Fonts (self-hosted via next/font, variables set on <html>) */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    var(--font-jbmono), ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono',
+    monospace;
 }
 
 body {
@@ -28,12 +60,16 @@ body {
   color: var(--color-ink);
 }
 
-/* Visible focus states — we sell BFSG awareness. */
+/* Deliberate, accessibility-first selection style — no soft shadows. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--color-pine);
   outline-offset: 2px;
-  border-radius: 2px;
+}
+
+/* Native accordion: hide the default marker, we render our own plus icon. */
+summary::-webkit-details-marker {
+  display: none;
 }

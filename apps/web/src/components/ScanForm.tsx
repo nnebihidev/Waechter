@@ -41,11 +41,12 @@ export function ScanForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="w-full max-w-xl" noValidate>
-      <label htmlFor="domain" className="mb-2 block text-sm font-medium text-ink">
+    <form onSubmit={onSubmit} className="mx-auto w-full max-w-xl" noValidate>
+      <label htmlFor="domain" className="sr-only">
         Ihre Website
       </label>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* Input and button share one continuous strong border, flush-joined. */}
+      <div className="flex flex-col overflow-hidden rounded-md border border-strong bg-card shadow-card sm:flex-row">
         <input
           id="domain"
           name="domain"
@@ -55,16 +56,19 @@ export function ScanForm() {
           placeholder="www.ihre-website.de"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full rounded-md border border-line bg-card px-4 py-3 text-base text-ink placeholder:text-muted"
+          className="w-full flex-1 border-b border-line bg-card px-4 py-3.5 text-base text-ink outline-none placeholder:text-muted sm:border-b-0"
         />
         <button
           type="submit"
-          className="shrink-0 rounded-md bg-pine px-6 py-3 text-base font-semibold text-white hover:bg-pine-dark"
+          className="shrink-0 bg-pine px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-pine-dark"
         >
           Website prüfen
         </button>
       </div>
-      <p aria-live="polite" className={`mt-3 min-h-6 text-sm ${isError ? 'text-ampel-rot' : 'text-muted'}`}>
+      <p
+        aria-live="polite"
+        className={`mt-4 min-h-6 text-sm ${isError ? 'text-rot' : 'text-muted'}`}
+      >
         {message}
       </p>
     </form>

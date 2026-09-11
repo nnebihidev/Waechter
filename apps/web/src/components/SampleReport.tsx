@@ -6,10 +6,10 @@ const SEVERITY_LABEL: Record<Severity, string> = {
   info: 'Hinweis',
 };
 
-const SEVERITY_CLASS: Record<Severity, string> = {
-  blocker: 'bg-red-50 text-ampel-rot border-ampel-rot/30',
-  warn: 'bg-amber-50 text-ampel-gelb border-ampel-gelb/30',
-  info: 'bg-pine-light text-pine border-pine/30',
+const SEVERITY_BADGE: Record<Severity, { badge: string; dot: string }> = {
+  blocker: { badge: 'bg-rot-bg text-rot border-rot-line', dot: 'bg-rot' },
+  warn: { badge: 'bg-gelb-bg text-gelb border-gelb-line', dot: 'bg-gelb' },
+  info: { badge: 'bg-gruen-bg text-gruen border-gruen-line', dot: 'bg-gruen' },
 };
 
 /** Anonymized but realistic sample evidence, keyed by the real rule catalog. */
@@ -31,27 +31,41 @@ const SAMPLE: { id: RuleId; evidence_de: string }[] = [
   },
 ];
 
+function SeverityBadge({ severity }: { severity: Severity }) {
+  const s = SEVERITY_BADGE[severity];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-mono text-xs font-medium tracking-wider uppercase ${s.badge}`}
+    >
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`}></span>
+      {SEVERITY_LABEL[severity]}
+    </span>
+  );
+}
+
 /**
  * Static sample report for the landing page. All copy comes from the real
  * rule catalog so the demo always matches what the engine actually says.
  */
 export function SampleReport() {
   return (
-    <div className="overflow-hidden rounded-lg border border-line bg-card shadow-sm">
+    <div className="mx-auto max-w-[600px] overflow-hidden rounded-md border border-line bg-card shadow-floating">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-6 py-5">
         <div>
-          <p className="text-sm text-muted">Beispielbericht · anonymisierte Demo-Daten</p>
-          <p className="text-lg font-semibold text-ink">beispiel-firma.de</p>
+          <p className="font-mono text-xs tracking-wider text-muted uppercase">
+            Beispielbericht · Demo-Daten
+          </p>
+          <p className="mt-1 text-lg font-semibold text-ink">beispiel-firma.de</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="inline-block h-3 w-3 rounded-full bg-ampel-rot"
-          ></span>
-          <p className="text-sm font-medium text-ink">
-            Score <span className="text-2xl font-bold">54</span>
+        <div className="text-right">
+          <p className="font-mono text-sm text-ink">
+            Score <span className="text-2xl font-semibold">54</span>
             <span className="text-muted">/100</span>
           </p>
+          <span className="mt-1 inline-flex items-center gap-1.5 rounded-sm border border-rot-line bg-rot-bg px-2 py-0.5 font-mono text-xs font-medium tracking-wider text-rot uppercase">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-rot"></span>
+            Handlungsbedarf
+          </span>
         </div>
       </div>
 
@@ -60,19 +74,22 @@ export function SampleReport() {
           const rule = CATALOG[id];
           return (
             <li key={id} className="px-6 py-5">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <span
-                  className={`rounded border px-2 py-0.5 text-xs font-semibold ${SEVERITY_CLASS[rule.severity]}`}
-                >
-                  {SEVERITY_LABEL[rule.severity]}
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <SeverityBadge severity={rule.severity} />
+                <span className="rounded-sm bg-subtle px-1.5 py-0.5 font-mono text-xs text-muted">
+                  {rule.legal_basis_label}
                 </span>
-                <span className="text-xs text-muted">{rule.legal_basis_label}</span>
               </div>
               <p className="font-semibold text-ink">{rule.title_de}</p>
-              <p className="mt-1 text-sm text-muted">{evidence_de}</p>
-              <p className="mt-2 text-sm text-ink">
-                <span className="font-medium">Was Sie tun können: </span>
-                {rule.fix_hint_de}
+              <p className="mt-1 text-sm leading-relaxed text-muted">{evidence_de}</p>
+              <p className="mt-3 flex gap-2 text-sm leading-relaxed text-ink">
+                <span aria-hidden="true" className="font-mono text-muted select-none">
+                  &gt;
+                </span>
+                <span>
+                  <span className="font-medium">Was Sie tun können: </span>
+                  {rule.fix_hint_de}
+                </span>
               </p>
             </li>
           );

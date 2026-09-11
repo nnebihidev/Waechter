@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
+import { LogoMark } from '@/components/icons';
 import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
+const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -11,16 +16,49 @@ export const metadata: Metadata = {
     'Pflichtwächter prüft deutsche Websites automatisch auf Impressum, Datenschutzerklärung, Cookie-Einwilligung, Preisangaben und Widerruf — und überwacht sie fortlaufend. Technisches Prüfwerkzeug, kein Rechtsrat.',
 };
 
+const FOOTER_COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
+  {
+    title: 'Produkt',
+    links: [
+      { href: '/#leistungen', label: 'Was wir prüfen' },
+      { href: '/#preise', label: 'Preise' },
+      { href: '/#faq', label: 'FAQ' },
+    ],
+  },
+  {
+    title: 'Rechtliches',
+    links: [
+      { href: '/impressum', label: 'Impressum' },
+      { href: '/datenschutz', label: 'Datenschutz' },
+      { href: '/agb', label: 'AGB' },
+    ],
+  },
+  {
+    title: 'Verträge',
+    links: [
+      { href: '/widerruf', label: 'Widerruf' },
+      { href: '/avv', label: 'AVV (Art. 28 DSGVO)' },
+    ],
+  },
+  {
+    title: 'Technik',
+    links: [{ href: '/bot', label: 'Unser Crawler' }],
+  },
+];
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de">
+    <html lang="de" className={`${inter.variable} ${jbMono.variable}`}>
       <body className="min-h-screen font-sans antialiased">
-        <header className="border-b border-line bg-paper">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-pine">
-              Pflichtwächter
+        <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
+            <Link href="/" className="flex items-center gap-2.5 text-pine">
+              <LogoMark className="h-6 w-6" />
+              <span className="text-lg font-semibold tracking-tight text-ink">
+                Pflichtwächter
+              </span>
             </Link>
-            <nav aria-label="Hauptnavigation" className="flex gap-5 text-sm text-ink">
+            <nav aria-label="Hauptnavigation" className="flex gap-4 text-sm text-ink sm:gap-6">
               <Link href="/#leistungen" className="hover:text-pine">
                 Was wir prüfen
               </Link>
@@ -36,36 +74,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <main>{children}</main>
 
-        <footer className="mt-16 border-t border-line bg-card">
-          <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-muted">
-            <p className="mb-6 max-w-2xl">
-              Pflichtwächter ist ein technisches Prüf- und Monitoring-Werkzeug. Es ersetzt keine
-              anwaltliche Beratung. Keine Garantie für Abmahnfreiheit.
-            </p>
-            <nav aria-label="Rechtliches" className="flex flex-wrap gap-x-5 gap-y-2">
-              <Link href="/impressum" className="hover:text-pine">
-                Impressum
-              </Link>
-              <Link href="/datenschutz" className="hover:text-pine">
-                Datenschutz
-              </Link>
-              <Link href="/agb" className="hover:text-pine">
-                AGB
-              </Link>
-              <Link href="/widerruf" className="hover:text-pine">
-                Widerruf
-              </Link>
-              <Link href="/avv" className="hover:text-pine">
-                AVV
-              </Link>
-              <Link href="/bot" className="hover:text-pine">
-                Unser Crawler
-              </Link>
-            </nav>
-            <p className="mt-6">
-              Server in der EU · Roh-Daten nach 30 Tagen gelöscht · Nur technisch notwendige
-              Cookies
-            </p>
+        <footer className="mt-24 border-t-2 border-strong bg-paper">
+          <div className="mx-auto max-w-6xl px-4 pt-16 pb-8">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
+              <div className="col-span-2 sm:col-span-1">
+                <p className="flex items-center gap-2 text-pine">
+                  <LogoMark className="h-5 w-5" />
+                  <span className="font-semibold tracking-tight text-ink">Pflichtwächter</span>
+                </p>
+                <p className="mt-3 font-mono text-xs tracking-wider text-muted uppercase">
+                  Server in der EU
+                  <br />
+                  Daten nach 30 Tagen gelöscht
+                  <br />
+                  Kein Rechtsrat
+                </p>
+              </div>
+              {FOOTER_COLUMNS.map((col) => (
+                <nav key={col.title} aria-label={col.title}>
+                  <p className="font-mono text-xs tracking-wider text-muted uppercase">
+                    {col.title}
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {col.links.map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} className="text-sm text-muted hover:text-ink">
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+            </div>
+            <div className="mt-12 border-t border-line pt-6">
+              <p className="text-sm text-muted">
+                Pflichtwächter ist ein technisches Prüf- und Monitoring-Werkzeug. Es ersetzt keine
+                anwaltliche Beratung. Keine Garantie für Abmahnfreiheit.
+              </p>
+            </div>
           </div>
         </footer>
       </body>
