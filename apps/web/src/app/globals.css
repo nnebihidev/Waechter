@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/*
+ * Design tokens: off-white paper, ink text, one accent (deep pine green).
+ * Looks like a competent Fachdienst, not a startup toy.
+ */
+@theme {
+  --color-paper: #faf8f4;
+  --color-card: #ffffff;
+  --color-ink: #1c2420;
+  --color-muted: #5b6660;
+  --color-line: #e4dfd5;
+  --color-pine: #1b4d3e;
+  --color-pine-dark: #143b2f;
+  --color-pine-light: #e9f1ed;
+  --color-ampel-rot: #b42318;
+  --color-ampel-gelb: #b25e09;
+  --color-ampel-gruen: #1b6d47;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Visible focus states — we sell BFSG awareness. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-pine);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
