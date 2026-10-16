@@ -110,6 +110,9 @@ npm run prebuild:release    # APP_VARIANT=release expo prebuild --clean
 - Or use EAS Build with `APP_VARIANT=release` in the build profile's `env`
   (`model/files/` must be present in the build — e.g. fetch it in an `eas-build-pre-install` hook).
 
+EAS profiles are in `eas.json` (`development`, `preview` → APK, `production` → AAB, both
+release profiles set `APP_VARIANT=release`).
+
 Set `APP_BUNDLE_ID` to your own identifier before the first release
 (default placeholder: `app.kompass.offline`).
 
@@ -129,6 +132,7 @@ Settings (supported on Snapdragon/Adreno 7xx+, falls back to CPU elsewhere).
 
 ## Known limitations
 
+- Brand assets (icon, splash, wordmark) are in `assets/` and `docs/brand/`; store screenshots in `docs/store/`.
 - Not verified on physical devices from this repository's CI — build and test on real
   hardware (one older iPhone and one mid-range Samsung at minimum) before release.
 - Android stores the model twice (asset pack + unpacked copy, ~2.2 GB total) because

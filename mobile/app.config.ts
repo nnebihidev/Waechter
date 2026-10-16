@@ -36,6 +36,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: bundleId,
+    // iOS 18 appearance variants: dark reuses the icon; tinted uses the monochrome glyph.
+    icon: { light: './assets/icon.png', dark: './assets/icon.png', tinted: './assets/android-icon-monochrome.png' },
     supportsTablet: true,
     buildNumber: '1',
     infoPlist: {
@@ -61,7 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: bundleId,
     versionCode: 1,
     adaptiveIcon: {
-      backgroundColor: '#0F1A14',
+      backgroundColor: '#0A0C0E',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
@@ -73,7 +75,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-localization',
-    ['expo-splash-screen', { image: './assets/splash-icon.png', imageWidth: 160, backgroundColor: '#0F1A14' }],
+    ['expo-splash-screen', { image: './assets/splash-icon.png', imageWidth: 140, backgroundColor: '#0A0C0E', dark: { backgroundColor: '#0A0C0E' } }],
     [
       'expo-location',
       {

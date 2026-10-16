@@ -27,6 +27,17 @@ the residual piracy risk rather than adding a network dependency.
 - Upload the `.aab` produced by `./gradlew bundleRelease`; Play shows the
   `kompass_model` install-time asset pack in the bundle explorer.
 
+## Assets
+
+- App icon, adaptive icon (foreground / background / monochrome) and splash icon live in
+  `assets/`; the source logo and a wordmark are in `docs/brand/`. iOS gets dark/tinted variants
+  via `ios.icon` in `app.config.ts`.
+- Store screenshots and the Play feature graphic are generated into `docs/store/` by the
+  web-preview capture (sample data —
+  replace with device captures before submission if the stores ask for it).
+- Privacy policy text: `docs/PRIVACY.md` (fill the {{ }} placeholders, host it at a public URL,
+  link it in both consoles).
+
 ## Review notes (paste into the reviewer field)
 
 > Kompass works fully offline. The AI model is bundled in the app and runs on-device;
