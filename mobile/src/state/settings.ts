@@ -4,15 +4,19 @@ import { Platform } from 'react-native';
 
 import { resolveLang, type Lang } from '../i18n/lang';
 import { STRINGS, type Strings } from '../i18n/strings';
+import { LEGAL, type LegalTexts } from '../legal/texts';
 import { createStore, useStore } from './store';
 
 export interface Settings {
   language: Lang | 'auto';
   gpu: boolean;
+  /** Terms version the user accepted on first launch, with timestamp (ISO). */
+  acceptedTerms: { version: number; at: string } | null;
 }
 
 const DEFAULTS: Settings = {
   language: 'auto',
+  acceptedTerms: null,
   // Metal is reliable on every supported iPhone; Android GPU (OpenCL) support varies.
   gpu: Platform.OS === 'ios',
 };
@@ -50,4 +54,8 @@ export function useLang(): Lang {
 
 export function useT(): Strings {
   return STRINGS[useLang()];
+}
+
+export function useLegal(): LegalTexts {
+  return LEGAL[useLang()];
 }

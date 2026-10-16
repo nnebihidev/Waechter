@@ -48,6 +48,14 @@ structure on warm grey for direct sunlight. No cards: rules, grids and numbers.
 - Compass (`tools.tsx`): SVG dial with 180 ticks, 30° numerals and cardinals; dial and
   needle rotate together on a spring with unwrapped angles (359° → 1° turns 2°).
 
+## Legal
+
+First launch shows a consent screen (112, AI can be wrong, general information, all local);
+acceptance is stored locally with timestamp and `TERMS_VERSION`. Terms, privacy, imprint and
+licences live in `src/legal/texts.ts` and `src/legal/licenses.json` (`npm run licenses`
+regenerates the latter). `tests/legal.test.ts` fails on guarantee or diagnosis wording anywhere
+in user-facing text. Publisher duties are listed in `docs/LEGAL-CHECKLIST.md`.
+
 ## Project layout
 
 ```

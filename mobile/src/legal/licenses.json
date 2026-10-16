@@ -1,0 +1,182 @@
+[
+  {
+    "name": "@expo-google-fonts/barlow-condensed",
+    "version": "0.4.1",
+    "license": "MIT AND OFL-1.1",
+    "url": "https://github.com/expo/google-fonts/tree/master/font-packages/barlow-condensed#readme"
+  },
+  {
+    "name": "@expo-google-fonts/manrope",
+    "version": "0.4.2",
+    "license": "MIT AND OFL-1.1",
+    "url": "https://github.com/expo/google-fonts/tree/master/font-packages/manrope#readme"
+  },
+  {
+    "name": "Barlow Condensed (font)",
+    "version": "",
+    "license": "OFL-1.1",
+    "url": "https://github.com/jpt/barlow"
+  },
+  {
+    "name": "expo",
+    "version": "57.0.30",
+    "license": "MIT",
+    "url": "https://github.com/expo/expo/tree/main/packages/expo"
+  },
+  {
+    "name": "expo-build-properties",
+    "version": "57.0.22",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/build-properties"
+  },
+  {
+    "name": "expo-clipboard",
+    "version": "57.0.2",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/clipboard"
+  },
+  {
+    "name": "expo-constants",
+    "version": "57.0.22",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/constants/"
+  },
+  {
+    "name": "expo-device",
+    "version": "57.0.2",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/device/"
+  },
+  {
+    "name": "expo-file-system",
+    "version": "57.0.7",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/filesystem/"
+  },
+  {
+    "name": "expo-font",
+    "version": "57.0.4",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/font/"
+  },
+  {
+    "name": "expo-keep-awake",
+    "version": "57.0.2",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/keep-awake/"
+  },
+  {
+    "name": "expo-linking",
+    "version": "57.0.13",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/linking"
+  },
+  {
+    "name": "expo-localization",
+    "version": "57.0.2",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/localization/"
+  },
+  {
+    "name": "expo-location",
+    "version": "57.0.21",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/location/"
+  },
+  {
+    "name": "expo-router",
+    "version": "57.0.28",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/routing/introduction/"
+  },
+  {
+    "name": "expo-splash-screen",
+    "version": "57.0.10",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/splash-screen/"
+  },
+  {
+    "name": "expo-status-bar",
+    "version": "57.0.1",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/status-bar/"
+  },
+  {
+    "name": "expo-system-ui",
+    "version": "57.0.4",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/system-ui"
+  },
+  {
+    "name": "llama.cpp (via llama.rn)",
+    "version": "bundled",
+    "license": "MIT",
+    "url": "https://github.com/ggml-org/llama.cpp"
+  },
+  {
+    "name": "llama.rn",
+    "version": "0.12.9",
+    "license": "MIT",
+    "url": "https://github.com/mybigday/llama.rn#readme"
+  },
+  {
+    "name": "Manrope (font)",
+    "version": "",
+    "license": "OFL-1.1",
+    "url": "https://github.com/sharanda/manrope"
+  },
+  {
+    "name": "Qwen2.5 1.5B Instruct (Q4_K_M)",
+    "version": "qwen2.5-1.5b-instruct-q4_k_m",
+    "license": "Apache-2.0",
+    "url": "https://huggingface.co/Qwen"
+  },
+  {
+    "name": "react",
+    "version": "19.2.3",
+    "license": "MIT",
+    "url": "https://react.dev/"
+  },
+  {
+    "name": "react-dom",
+    "version": "19.2.3",
+    "license": "MIT",
+    "url": "https://react.dev/"
+  },
+  {
+    "name": "react-native",
+    "version": "0.86.3",
+    "license": "MIT",
+    "url": "https://reactnative.dev/"
+  },
+  {
+    "name": "react-native-reanimated",
+    "version": "4.5.1",
+    "license": "MIT",
+    "url": "https://docs.swmansion.com/react-native-reanimated"
+  },
+  {
+    "name": "react-native-safe-area-context",
+    "version": "5.7.0",
+    "license": "MIT",
+    "url": "https://github.com/AppAndFlow/react-native-safe-area-context#readme"
+  },
+  {
+    "name": "react-native-screens",
+    "version": "4.26.2",
+    "license": "MIT",
+    "url": "https://github.com/software-mansion/react-native-screens#readme"
+  },
+  {
+    "name": "react-native-svg",
+    "version": "15.15.4",
+    "license": "MIT",
+    "url": "https://github.com/react-native-community/react-native-svg"
+  },
+  {
+    "name": "react-native-worklets",
+    "version": "0.10.1",
+    "license": "MIT",
+    "url": "https://docs.swmansion.com/react-native-worklets"
+  }
+]

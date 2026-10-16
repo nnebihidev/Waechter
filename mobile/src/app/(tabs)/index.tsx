@@ -9,7 +9,7 @@ import type { Lang } from '../../i18n/lang';
 import { GUIDES, guideById } from '../../knowledge/guides';
 import { indexFor, pickReferences } from '../../knowledge/search';
 import { chatStore, nextId, updateEntry, type ChatEntry } from '../../state/chat';
-import { useLang, useT } from '../../state/settings';
+import { useLang, useLegal, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
 import { cardinal, normalizeHeading } from '../../tools/geo';
 import { useSensors } from '../../tools/useSensors';
@@ -73,6 +73,7 @@ function Message({ entry, lang }: { entry: ChatEntry; lang: Lang }) {
 export default function HomeScreen() {
   const t = useTheme();
   const s = useT();
+  const l = useLegal();
   const lang = useLang();
   const ai = useStore(aiStore);
   const { entries, draft } = useStore(chatStore);
@@ -144,7 +145,7 @@ export default function HomeScreen() {
               {entries.map((e) => (
                 <Message key={e.id} entry={e} lang={lang} />
               ))}
-              <Text style={[type.footnote, { color: t.dim, marginTop: space.sm }]}>{s.aiDisclaimer}</Text>
+              <Text style={[type.footnote, { color: t.dim, marginTop: space.sm }]}>{l.aiNotice}</Text>
             </>
           )}
         </ScrollView>

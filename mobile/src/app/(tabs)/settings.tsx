@@ -5,9 +5,10 @@ import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { aiStore, ensureModel, importModel, MODEL_MANIFEST, modelStorageBytes, reloadModel, removeImportedModel } from '../../ai/engine';
 import { aiStatusLabel, ProgressRule } from '../../components/ModelGate';
 import type { Lang } from '../../i18n/lang';
-import { updateSettings, useSettings, useT } from '../../state/settings';
+import { updateSettings, useLegal, useSettings, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
-import { Badge, Body, Display, IconFrame, Press, Reveal, Screen, SectionLabel, Slab, StatusStrip } from '../../ui/kit';
+import { Badge, Body, Display, IconFrame, List, ListRow, Press, Reveal, Screen, SectionLabel, Slab, StatusStrip } from '../../ui/kit';
+import { router } from 'expo-router';
 import { radius, space, TAB_BAR_HEIGHT, type, useTheme } from '../../ui/theme';
 
 function formatBytes(n: number): string {
@@ -41,6 +42,7 @@ export default function SettingsScreen() {
   const t = useTheme();
   const s = useT();
   const settings = useSettings();
+  const l = useLegal();
   const ai = useStore(aiStore);
   const [importState, setImportState] = useState<'idle' | 'copying' | 'invalid' | 'error'>('idle');
   const [importError, setImportError] = useState('');
@@ -124,8 +126,13 @@ export default function SettingsScreen() {
         </Reveal>
 
         <Reveal index={3} style={styles.group}>
-          <SectionLabel label={s.privacyTitle} />
-          <Body muted small>{s.privacyBody}</Body>
+          <SectionLabel label={l.legalMenu} />
+          <List>
+            <ListRow title={l.termsTitle} left={<IconFrame name="document" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'terms' } })} />
+            <ListRow title={l.privacyTitle} subtitle={s.privacyBody.split('.')[0] + '.'} left={<IconFrame name="shield" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'privacy' } })} />
+            <ListRow title={l.imprintTitle} left={<IconFrame name="info" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'imprint' } })} />
+            <ListRow title={l.licensesTitle} left={<IconFrame name="book" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'licenses' } })} />
+          </List>
         </Reveal>
 
         <Reveal index={4} style={styles.group}>

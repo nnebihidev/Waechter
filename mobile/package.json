@@ -5,7 +5,6 @@
   "dependencies": {
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/manrope": "^0.4.2",
-    "@expo/vector-icons": "^15.0.2",
     "expo": "~57.0.30",
     "expo-build-properties": "~57.0.22",
     "expo-clipboard": "~57.0.2",
@@ -45,7 +44,8 @@
     "prebuild:release": "APP_VARIANT=release expo prebuild --clean",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "licenses": "node scripts/licenses.mjs"
   },
   "private": true,
   "engines": {

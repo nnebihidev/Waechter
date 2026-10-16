@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { splitStep } from '../../knowledge/format';
 import { guideById } from '../../knowledge/guides';
 import { chatStore } from '../../state/chat';
-import { useLang, useT } from '../../state/settings';
+import { useLang, useLegal, useT } from '../../state/settings';
 import { AlertBar, Body, Display, Icon, Press, Reveal, Screen, SectionLabel, Slab, StatusStrip } from '../../ui/kit';
 import { font, radius, space, type, useTheme } from '../../ui/theme';
 
@@ -16,6 +16,7 @@ export default function GuideScreen() {
   const lang = useLang();
   const t = useTheme();
   const s = useT();
+  const l = useLegal();
   const insets = useSafeAreaInsets();
 
   if (!guide) return <Body muted>{s.noResults}</Body>;
@@ -79,7 +80,11 @@ export default function GuideScreen() {
           />
           <View style={styles.disclaimer}>
             <Icon name="shield" size={14} color={t.dim} />
-            <Text style={[type.footnote, { color: t.dim, flex: 1 }]}>{s.guideDisclaimer}</Text>
+            <Text style={[type.footnote, { color: t.dim, flex: 1 }]}>{l.guideNotice}</Text>
+          </View>
+          <View style={styles.disclaimer}>
+            <Icon name="book" size={14} color={t.dim} />
+            <Text style={[type.footnote, { color: t.dim, flex: 1 }]}>{l.sourcesNotice}</Text>
           </View>
         </Reveal>
       </ScrollView>

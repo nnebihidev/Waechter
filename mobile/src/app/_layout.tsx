@@ -7,12 +7,16 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { TERMS_VERSION } from '../legal/texts';
+import { useSettings } from '../state/settings';
 import { useTheme } from '../ui/theme';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   const t = useTheme();
+  const { acceptedTerms } = useSettings();
+  const accepted = acceptedTerms !== null && acceptedTerms.version >= TERMS_VERSION;
   const [loaded] = useFonts({ BarlowCondensed_600SemiBold, BarlowCondensed_700Bold, Manrope_500Medium, Manrope_700Bold });
 
   useEffect(() => {
@@ -29,9 +33,15 @@ export default function RootLayout() {
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
       <ThemeProvider value={navTheme}>
         <Stack screenOptions={{ contentStyle: { backgroundColor: t.bg }, headerShown: false, animation: 'fade' }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right', animationDuration: 220 }} />
-          <Stack.Screen name="signal" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          <Stack.Protected guard={!accepted}>
+            <Stack.Screen name="welcome" />
+          </Stack.Protected>
+          <Stack.Protected guard={accepted}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right', animationDuration: 220 }} />
+            <Stack.Screen name="signal" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          </Stack.Protected>
+          <Stack.Screen name="legal" options={{ animation: 'slide_from_bottom' }} />
         </Stack>
       </ThemeProvider>
     </SafeAreaProvider>
