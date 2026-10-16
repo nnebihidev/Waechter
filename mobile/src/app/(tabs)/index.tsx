@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { aiStore, ensureModel, generate, PROMPT_BUDGET_TOKENS, stopGeneration } from '../../ai/engine';
+import { guardInput, guardOutput } from '../../ai/harness';
 import { buildAssistantMessages, looksLikeEmergency, plainifyMarkdown, type ChatMessage } from '../../ai/prompts';
 import { aiStatusLabel, ProgressRule } from '../../components/ModelGate';
 import type { Lang } from '../../i18n/lang';
@@ -23,14 +24,21 @@ async function send(text: string, lang: Lang, errorText: string) {
     .get()
     .entries.filter((e) => !e.failed)
     .map((e) => ({ role: e.role, content: e.content }));
-  const references = pickReferences(indexFor(GUIDES, lang).search(question));
+  const verdict = guardInput(question, lang);
+  // Guides only ground emergency and everyday turns; a person in crisis must not get first-aid chips.
+  const references = verdict.intent === 'emergency' || verdict.intent === 'everyday' ? pickReferences(indexFor(GUIDES, lang).search(question)) : [];
   const user: ChatEntry = { id: nextId(), role: 'user', content: question, emergency: looksLikeEmergency(question) };
-  const answer: ChatEntry = { id: nextId(), role: 'assistant', content: '', streaming: true, sources: references.map((g) => g.id) };
+  const answer: ChatEntry = { id: nextId(), role: 'assistant', content: verdict.reply ?? verdict.preamble ?? '', streaming: !verdict.reply, sources: references.map((g) => g.id) };
   chatStore.set((s) => ({ entries: [...s.entries, user, answer], draft: '' }));
-  const messages = buildAssistantMessages({ lang, history, userText: question, references, budgetTokens: PROMPT_BUDGET_TOKENS });
+  // Blocked intents never reach the model.
+  if (verdict.reply) return;
+  const prefix = verdict.preamble ? `${verdict.preamble}\n\n` : '';
+  const messages = buildAssistantMessages({ lang, history, userText: question, references, budgetTokens: PROMPT_BUDGET_TOKENS, intent: verdict.intent });
   try {
-    const final = await generate(messages, (partial) => updateEntry(answer.id, { content: partial }));
-    updateEntry(answer.id, { content: final, streaming: false });
+    const final = await generate(messages, (partial) => updateEntry(answer.id, { content: prefix + partial }), {
+      temperature: verdict.intent === 'story' ? 0.8 : verdict.intent === 'crisis' || verdict.intent === 'companion' ? 0.5 : 0.6,
+    });
+    updateEntry(answer.id, { content: prefix + guardOutput(final, lang), streaming: false });
   } catch (e) {
     const reason = e instanceof Error ? e.message : String(e);
     updateEntry(answer.id, { content: `${errorText}: ${reason}`, streaming: false, failed: true });
@@ -128,6 +136,8 @@ export default function HomeScreen() {
                   <Tile title={s.tileEmergency} caption={s.tileEmergencySub} icon="phone" signal onPress={() => callEmergency()} />
                   <Tile title={s.tileLost} caption={s.tileLostSub} icon="mountain" onPress={() => router.push({ pathname: '/guide/[id]', params: { id: 'lost' } })} />
                   <Tile title={s.tileInjured} caption={s.tileInjuredSub} icon="heartPulse" onPress={() => router.navigate('/guides')} />
+                  <Tile title={s.tileTalk} caption={s.tileTalkSub} icon="chat" onPress={() => submit(s.talkPrompt)} />
+                  <Tile title={s.tileStory} caption={s.tileStorySub} icon="book" onPress={() => submit(s.storyPrompt)} />
                   <Tile title={s.tileTranslate} caption={s.tileTranslateSub} icon="translate" onPress={() => router.navigate('/translate')} />
                 </View>
               </Reveal>

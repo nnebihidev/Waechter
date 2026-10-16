@@ -9,6 +9,7 @@ import manifest from '../../model/manifest.json';
 import { settingsStore } from '../state/settings';
 import { createStore } from '../state/store';
 import { isGgufHeader } from './gguf';
+import { HARNESS_STOP } from './harness';
 import { STOP_WORDS, type ChatMessage } from './prompts';
 
 export type ModelSource = 'bundled' | 'imported';
@@ -159,7 +160,7 @@ export async function generate(
         top_p: 0.9,
         top_k: 40,
         penalty_repeat: 1.1,
-        stop: STOP_WORDS,
+        stop: [...STOP_WORDS, ...HARNESS_STOP],
       },
       (data) => {
         text = data.accumulated_text ?? text + data.token;

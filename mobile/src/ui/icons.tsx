@@ -63,6 +63,7 @@ const GLYPHS = {
   clock: 'M12 3.2 a8.8 8.8 0 1 0 0 17.6 a8.8 8.8 0 1 0 0 -17.6 Z M12 7.5 V12 L15 14',
   wind: 'M3 8.5 H14 a2.5 2.5 0 1 0 -2.5 -2.5 M3 12.5 H18.5 a2.5 2.5 0 1 1 -2.5 2.5 M3 16.5 H11 a2 2 0 1 1 -2 2',
   signalOff: 'M4 20 V16 M9 20 V12 M14 20 V8 M19 20 V4 M3 3 L21 21',
+  chat: 'M4.5 5.5 H19.5 V15.5 H10 L5.5 19.5 V15.5 H4.5 Z M8.5 10.5 H15.5',
 } as const;
 
 export type IconName = keyof typeof GLYPHS;

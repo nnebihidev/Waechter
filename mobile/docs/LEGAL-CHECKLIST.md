@@ -15,6 +15,7 @@ das Ziel ist, Risiko und Angriffsfläche so klein wie möglich zu machen._
 | Lizenzliste aller gebündelten Komponenten inkl. KI-Modell (Apache-2.0) und Schriften (OFL) | `src/legal/licenses.json`, `npm run licenses` |
 | Haftungshinweis unter jeder KI-Antwort und jeder Anleitung; Quellenhinweis (ERC-orientiert, fachlich zu prüfen) | Screens |
 | Notruf-Hinweis bei allen lebensbedrohlichen Themen und bei erkannten Notfall-Eingaben | Guides, Chat |
+| KI-Harness: Programmier-/IT-/Hacking-Anfragen und Jailbreak-Versuche erreichen das Modell nicht; Suizid-/Selbstverletzungs-Äußerungen lösen Krisenkontakte (112, Telefonseelsorge) vor der Antwort aus; Ausgaben mit Code werden ersetzt | `src/ai/harness.ts`, `tests/harness.test.ts` |
 | Kein Medizinprodukt-Claim, keine Diagnose, keine Garantien — durch Test abgesichert | `tests/legal.test.ts` |
 | Keine Datenverarbeitung außerhalb des Geräts — durch Test und Android-Manifest abgesichert | `tests/offline.test.ts`, `app.config.ts` |
 

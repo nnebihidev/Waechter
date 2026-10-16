@@ -48,6 +48,18 @@ structure on warm grey for direct sunlight. No cards: rules, grids and numbers.
 - Compass (`tools.tsx`): SVG dial with 180 ticks, 30° numerals and cardinals; dial and
   needle rotate together on a spring with unwrapped angles (359° → 1° turns 2°).
 
+## AI harness
+
+`src/ai/harness.ts` wraps every assistant turn. A deterministic classifier routes the message to
+one of: `emergency` (112 first, then steps), `crisis` (self-harm — crisis contacts are shown
+before the model answers; the model is told never to discuss methods), `companion` (loneliness,
+worry — warm, one open question), `story`, `everyday`, or `blocked` (programming, IT support,
+hacking, jailbreak attempts — the model is never called; a fixed refusal is shown). Each intent
+appends scope + style instructions to the system prompt; code fences are stop sequences; and
+`guardOutput` replaces any answer that still looks like code. `tests/harness.test.ts` pins the
+routing. Scope is intentionally narrow: everyday life, outdoors, first aid, listening, stories,
+translation — nothing technical.
+
 ## Legal
 
 First launch shows a declaration of consent: the text must be scrolled to the end and three

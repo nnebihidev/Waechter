@@ -1,5 +1,6 @@
 import { translationLangName, type Lang, type TranslationLangCode } from '../i18n/lang';
 import { normalize } from '../knowledge/search';
+import { systemAddendum, type Intent } from './harness';
 import type { Guide } from '../knowledge/types';
 
 export type Role = 'system' | 'user' | 'assistant';
@@ -20,7 +21,7 @@ export function estimateTokens(text: string): number {
 const SYSTEM: Record<Lang, string> = {
   en: [
     'You are Kompass, an offline assistant running entirely on this phone. There is no internet: you cannot look anything up, call anyone or see the user\'s surroundings.',
-    'Help with everyday questions and with outdoor or emergency situations. Be calm, concrete and brief. Prefer short numbered steps.',
+    'Help with everyday life, outdoor and emergency situations, keep people company when they feel alone, and tell stories. Be calm, concrete and brief.',
     'Safety rules:',
     '- If someone may be in danger of life (unconscious, not breathing, severe bleeding, chest pain, stroke signs, severe allergic reaction, poisoning), first tell the user to call 112 (or the local emergency number), then give first-aid steps.',
     '- Never claim a wild plant, berry or mushroom is safe to eat.',
@@ -30,7 +31,7 @@ const SYSTEM: Record<Lang, string> = {
   ].join('\n'),
   de: [
     'Sie sind Kompass, ein Offline-Assistent, der vollständig auf diesem Telefon läuft. Es gibt kein Internet: Sie können nichts nachschlagen, niemanden anrufen und die Umgebung nicht sehen.',
-    'Helfen Sie bei Alltagsfragen sowie in Outdoor- und Notfallsituationen. Ruhig, konkret und knapp. Bevorzugt kurze, nummerierte Schritte.',
+    'Helfen Sie im Alltag, draußen und im Notfall, leisten Sie Gesellschaft, wenn jemand sich allein fühlt, und erzählen Sie Geschichten. Ruhig, konkret und knapp.',
     'Sicherheitsregeln:',
     '- Bei möglicher Lebensgefahr (bewusstlos, keine Atmung, starke Blutung, Brustschmerz, Schlaganfallzeichen, schwere allergische Reaktion, Vergiftung) zuerst auffordern, die 112 (bzw. den örtlichen Notruf) zu wählen, dann Erste-Hilfe-Schritte nennen.',
     '- Erklären Sie niemals eine Wildpflanze, Beere oder einen Pilz für essbar.',
@@ -59,6 +60,8 @@ export interface AssistantPromptInput {
   references: Guide[];
   /** Token budget for system + references + history + new message. */
   budgetTokens: number;
+  /** Harness intent for this turn; selects scope and style instructions. */
+  intent?: Intent;
 }
 
 /**
@@ -66,8 +69,8 @@ export interface AssistantPromptInput {
  * budget is exceeded; the system prompt, references and new message always stay.
  */
 export function buildAssistantMessages(input: AssistantPromptInput): ChatMessage[] {
-  const { lang, history, userText, references, budgetTokens } = input;
-  let system = SYSTEM[lang];
+  const { lang, history, userText, references, budgetTokens, intent = 'everyday' } = input;
+  let system = `${SYSTEM[lang]}\n${systemAddendum(intent, lang)}`;
   if (references.length > 0) {
     const header = lang === 'de' ? 'Referenznotizen aus der App:' : 'Reference notes from the app:';
     system += `\n\n${header}\n\n${references.map((g) => guideAsReference(g, lang)).join('\n\n')}`;
