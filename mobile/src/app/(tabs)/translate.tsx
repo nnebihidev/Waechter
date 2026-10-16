@@ -1,57 +1,41 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { aiStore, generate, stopGeneration } from '../../ai/engine';
 import { buildTranslationMessages } from '../../ai/prompts';
 import { ModelGate } from '../../components/ModelGate';
-import { TRANSLATION_LANGS, type TranslationLangCode } from '../../i18n/lang';
+import { TRANSLATION_LANGS, translationLangName, type TranslationLangCode } from '../../i18n/lang';
 import { useLang, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
-import { Button } from '../../ui/components';
-import { radius, space, useTheme } from '../../ui/theme';
+import { Button, Chip, ScreenHeader, SectionLabel } from '../../ui/components';
+import { radius, space, type, useTheme } from '../../ui/theme';
+
+const MAX_CHARS = 4000;
 
 function LangRow({
   label,
   value,
   onChange,
   allowAuto,
-  autoLabel,
 }: {
   label: string;
   value: TranslationLangCode | 'auto';
   onChange: (v: TranslationLangCode | 'auto') => void;
   allowAuto?: boolean;
-  autoLabel: string;
 }) {
   const t = useTheme();
+  const s = useT();
   const lang = useLang();
-  const options: Array<{ code: TranslationLangCode | 'auto'; name: string }> = [
-    ...(allowAuto ? [{ code: 'auto' as const, name: autoLabel }] : []),
-    ...TRANSLATION_LANGS.map((l) => ({ code: l.code, name: l[lang] })),
-  ];
   return (
-    <View style={{ gap: space.xs }}>
-      <Text style={{ color: t.muted, fontSize: 13, fontWeight: '600' }}>{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.xs }}>
-        {options.map((o) => {
-          const active = o.code === value;
-          return (
-            <Pressable
-              key={o.code}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              onPress={() => onChange(o.code)}
-              style={[
-                styles.chip,
-                { borderColor: active ? t.primary : t.border, backgroundColor: active ? t.primary : t.card },
-              ]}
-            >
-              <Text style={{ color: active ? t.onPrimary : t.text, fontWeight: '600' }}>{o.name}</Text>
-            </Pressable>
-          );
-        })}
+    <View style={{ gap: space.sm }}>
+      <Text style={[type.footnote, { color: t.muted, fontWeight: '700' }]}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm, paddingRight: space.lg }}>
+        {allowAuto ? <Chip label={s.autoDetect} icon="sparkles" active={value === 'auto'} onPress={() => onChange('auto')} /> : null}
+        {TRANSLATION_LANGS.map((l) => (
+          <Chip key={l.code} label={l[lang]} active={l.code === value} onPress={() => onChange(l.code)} />
+        ))}
       </ScrollView>
     </View>
   );
@@ -85,6 +69,12 @@ function Translator() {
     }
   };
 
+  const clear = () => {
+    setInput('');
+    setOutput('');
+    setCopied(false);
+  };
+
   const swap = () => {
     if (from === 'auto') return;
     setFrom(to);
@@ -96,96 +86,118 @@ function Translator() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
-      <LangRow label={s.translateFrom} value={from} onChange={setFrom} allowAuto autoLabel={s.autoDetect} />
-      <View style={styles.swapRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={s.swap}
-          disabled={from === 'auto'}
-          onPress={swap}
-          style={{ opacity: from === 'auto' ? 0.35 : 1, padding: space.xs }}
-        >
-          <Ionicons name="swap-vertical" size={26} color={t.primary} />
-        </Pressable>
-      </View>
-      <LangRow
-        label={s.translateTo}
-        value={to}
-        onChange={(v) => v !== 'auto' && setTo(v)}
-        autoLabel={s.autoDetect}
-      />
-
-      <TextInput
-        value={input}
-        onChangeText={setInput}
-        placeholder={s.translatePlaceholder}
-        placeholderTextColor={t.muted}
-        multiline
-        style={[styles.box, { color: t.text, borderColor: t.border, backgroundColor: t.card }]}
-      />
-      <View style={styles.row}>
-        {busy ? (
-          <Button label={s.stop} icon="stop" variant="danger" onPress={() => void stopGeneration()} />
-        ) : (
-          <Button label={s.translate} icon="language" onPress={() => void run()} disabled={!input.trim()} />
-        )}
-        {input ? (
-          <Button
-            label={s.clear}
-            variant="secondary"
-            onPress={() => {
-              setInput('');
-              setOutput('');
-            }}
-          />
-        ) : null}
-      </View>
-
-      {error ? <Text style={{ color: t.danger }}>{error}</Text> : null}
-      {output ? (
-        <View style={[styles.box, styles.output, { borderColor: t.primary, backgroundColor: t.card }]}>
-          <Text selectable style={{ color: t.text, fontSize: 18, lineHeight: 26 }}>
-            {output}
-          </Text>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+        <LangRow label={s.translateFrom} value={from} onChange={setFrom} allowAuto />
+        <View style={styles.swapRow}>
+          <View style={[styles.swapLine, { backgroundColor: t.divider }]} />
           <Pressable
             accessibilityRole="button"
-            onPress={async () => {
-              await Clipboard.setStringAsync(output);
-              setCopied(true);
-            }}
-            style={styles.copy}
+            accessibilityLabel={s.swap}
+            disabled={from === 'auto'}
+            onPress={swap}
+            style={[styles.swap, { borderColor: t.border, backgroundColor: t.card, opacity: from === 'auto' ? 0.4 : 1 }]}
           >
-            <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={t.primary} />
-            <Text style={{ color: t.primary, fontWeight: '600' }}>{copied ? s.copied : s.copy}</Text>
+            <Ionicons name="swap-vertical" size={20} color={t.primary} />
           </Pressable>
+          <View style={[styles.swapLine, { backgroundColor: t.divider }]} />
         </View>
-      ) : null}
-    </ScrollView>
+        <LangRow label={s.translateTo} value={to} onChange={(v) => v !== 'auto' && setTo(v)} />
+
+        <View style={[styles.inputCard, { borderColor: t.border, backgroundColor: t.card }]}>
+          <TextInput
+            value={input}
+            onChangeText={(v) => setInput(v.slice(0, MAX_CHARS))}
+            placeholder={s.translatePlaceholder}
+            placeholderTextColor={t.faint}
+            multiline
+            style={[styles.input, { color: t.text }]}
+          />
+          <View style={styles.inputFoot}>
+            <Text style={[type.footnote, { color: t.faint, fontVariant: ['tabular-nums'], flex: 1 }]}>
+              {input.length} / {MAX_CHARS} {s.characters}
+            </Text>
+            {input ? (
+              <Pressable accessibilityRole="button" accessibilityLabel={s.clear} onPress={clear} hitSlop={10}>
+                <Ionicons name="close-circle" size={22} color={t.faint} />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          {busy ? (
+            <Button label={s.stop} icon="stop" variant="danger" onPress={() => void stopGeneration()} style={{ flex: 1 }} />
+          ) : (
+            <Button label={s.translate} icon="sparkles" onPress={() => void run()} disabled={!input.trim()} style={{ flex: 1 }} />
+          )}
+          <Button label={s.clear} icon="trash-outline" variant="outline" onPress={clear} disabled={!input || busy} style={{ flex: 1 }} />
+        </View>
+
+        {error ? <Text style={{ color: t.danger }}>{error}</Text> : null}
+
+        {output || busy ? (
+          <View style={{ gap: space.sm }}>
+            <SectionLabel label={s.translationLabel} />
+            <View style={[styles.result, { borderColor: t.primarySoft, backgroundColor: t.primarySofter }]}>
+              <View style={styles.resultHead}>
+                <Ionicons name="sparkles" size={16} color={t.accent} />
+                <Text style={[type.footnote, { color: t.accent, fontWeight: '700', flex: 1 }]}>
+                  {translationLangName(to, uiLang)}
+                </Text>
+                {busy ? <ActivityIndicator size="small" color={t.accent} /> : null}
+              </View>
+              <Text selectable style={[styles.resultText, { color: t.text }]}>
+                {output || '…'}
+              </Text>
+              {output && !busy ? (
+                <>
+                  <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.border }} />
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={async () => {
+                      await Clipboard.setStringAsync(output);
+                      setCopied(true);
+                    }}
+                    style={styles.copy}
+                  >
+                    <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={t.primary} />
+                    <Text style={{ color: t.primary, fontWeight: '700' }}>{copied ? s.copied : s.copy}</Text>
+                  </Pressable>
+                </>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 export default function TranslateScreen() {
+  const t = useTheme();
+  const s = useT();
   return (
-    <ModelGate>
-      <Translator />
-    </ModelGate>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader title={s.tabTranslate} />
+      <ModelGate>
+        <Translator />
+      </ModelGate>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: space.lg, gap: space.md },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, paddingVertical: space.sm },
-  swapRow: { alignItems: 'center', marginVertical: -space.sm },
-  box: {
-    minHeight: 120,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: space.md,
-    fontSize: 17,
-    textAlignVertical: 'top',
-  },
-  output: { gap: space.md, borderWidth: 1.5 },
-  row: { flexDirection: 'row', gap: space.sm },
-  copy: { flexDirection: 'row', gap: space.xs, alignItems: 'center', alignSelf: 'flex-end' },
+  wrap: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.md },
+  swapRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  swapLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  swap: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  inputCard: { borderWidth: 1, borderRadius: radius.md, padding: space.lg, gap: space.sm },
+  input: { minHeight: 110, fontSize: 20, lineHeight: 28, textAlignVertical: 'top', padding: 0 },
+  inputFoot: { flexDirection: 'row', alignItems: 'center' },
+  row: { flexDirection: 'row', gap: space.md },
+  result: { borderWidth: 1, borderRadius: radius.md, padding: space.lg, gap: space.md },
+  resultHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  resultText: { fontSize: 20, lineHeight: 28 },
+  copy: { flexDirection: 'row', gap: 6, alignItems: 'center' },
 });

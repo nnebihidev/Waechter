@@ -9,15 +9,19 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: t.card },
-          headerTintColor: t.text,
-          contentStyle: { backgroundColor: t.bg },
-        }}
-      >
+      <Stack screenOptions={{ contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="guide/[id]" options={{ title: '' }} />
+        <Stack.Screen
+          name="guide/[id]"
+          options={{
+            title: '',
+            headerStyle: { backgroundColor: t.primary },
+            headerTintColor: t.onPrimary,
+            headerTitleStyle: { fontWeight: '700' },
+            headerShadowVisible: false,
+            headerBackButtonDisplayMode: 'minimal',
+          }}
+        />
         <Stack.Screen name="signal" options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'fade' }} />
       </Stack>
     </SafeAreaProvider>

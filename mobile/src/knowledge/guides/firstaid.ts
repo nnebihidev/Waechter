@@ -90,7 +90,7 @@ export const FIRST_AID_GUIDES: Guide[] = [
       en: {
         title: 'CPR — not breathing normally',
         summary: 'Unresponsive and not breathing normally: call 112, then push hard and fast in the centre of the chest.',
-        keywords: ['resuscitation', 'cardiac arrest', 'heart attack', 'unconscious', 'not breathing', 'chest compressions', 'aed', 'defibrillator', 'reanimation'],
+        keywords: ['resuscitation', 'cardiac arrest', 'heart attack', 'unconscious', 'collapsed', 'not breathing', 'no pulse', 'chest compressions', 'aed', 'defibrillator', 'reanimation'],
         sections: [
           {
             heading: 'Check',
@@ -116,7 +116,7 @@ export const FIRST_AID_GUIDES: Guide[] = [
       de: {
         title: 'Wiederbelebung — keine normale Atmung',
         summary: 'Nicht ansprechbar und keine normale Atmung: 112 rufen, dann fest und schnell in der Brustmitte drücken.',
-        keywords: ['reanimation', 'herzdruckmassage', 'herzstillstand', 'herzinfarkt', 'bewusstlos', 'atmet nicht', 'defibrillator', 'aed', 'beatmung'],
+        keywords: ['reanimation', 'herzdruckmassage', 'herzstillstand', 'herzinfarkt', 'bewusstlos', 'zusammengebrochen', 'kollabiert', 'atmet nicht', 'keine atmung', 'defibrillator', 'aed', 'beatmung'],
         sections: [
           {
             heading: 'Prüfen',

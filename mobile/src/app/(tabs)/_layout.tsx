@@ -6,8 +6,10 @@ import { useT } from '../../state/settings';
 import type { IconName } from '../../ui/components';
 import { useTheme } from '../../ui/theme';
 
-function icon(name: IconName) {
-  return ({ color, size }: { color: ColorValue; size: number }) => <Ionicons name={name} size={size} color={color} />;
+function icon(active: IconName, inactive: IconName) {
+  return ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) => (
+    <Ionicons name={focused ? active : inactive} size={size} color={color} />
+  );
 }
 
 export default function TabLayout() {
@@ -16,19 +18,19 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.muted,
+        tabBarInactiveTintColor: theme.faint,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.border },
-        headerStyle: { backgroundColor: theme.card },
-        headerTintColor: theme.text,
         sceneStyle: { backgroundColor: theme.bg },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: t.tabAssistant, tabBarIcon: icon('chatbubbles') }} />
-      <Tabs.Screen name="translate" options={{ title: t.tabTranslate, tabBarIcon: icon('language') }} />
-      <Tabs.Screen name="guides" options={{ title: t.tabGuides, tabBarIcon: icon('medkit') }} />
-      <Tabs.Screen name="tools" options={{ title: t.tabTools, tabBarIcon: icon('compass') }} />
-      <Tabs.Screen name="settings" options={{ title: t.tabSettings, tabBarIcon: icon('settings') }} />
+      <Tabs.Screen name="index" options={{ title: t.tabAssistant, tabBarIcon: icon('sparkles', 'sparkles-outline') }} />
+      <Tabs.Screen name="translate" options={{ title: t.tabTranslate, tabBarIcon: icon('language', 'language-outline') }} />
+      <Tabs.Screen name="guides" options={{ title: t.tabGuidesShort, tabBarIcon: icon('book', 'book-outline') }} />
+      <Tabs.Screen name="tools" options={{ title: t.tabTools, tabBarIcon: icon('compass', 'compass-outline') }} />
+      <Tabs.Screen name="settings" options={{ title: t.tabSettingsShort, tabBarIcon: icon('settings', 'settings-outline') }} />
     </Tabs>
   );
 }

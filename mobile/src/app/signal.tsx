@@ -2,7 +2,8 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '../state/settings';
 import { alpineTimeline, morsePulses, toTimeline } from '../tools/morse';
@@ -14,6 +15,7 @@ export default function SignalScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const timeline = useMemo(() => (mode === 'alpine' ? alpineTimeline() : toTimeline(morsePulses('sos'))), [mode]);
   const [index, setIndex] = useState(0);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const pulse = timeline[index];
@@ -31,12 +33,19 @@ export default function SignalScreen() {
       style={[styles.full, { backgroundColor: on ? '#FFFFFF' : '#000000' }]}
     >
       <StatusBar hidden />
-      <Text style={[styles.hint, { color: on ? '#000000' : '#666666' }]}>{s.sosStop}</Text>
+      <View style={[styles.top, { paddingTop: insets.top + 24 }]}>
+        <Text style={[styles.brand, { color: on ? '#111111' : '#FFFFFF' }]}>Kompass</Text>
+        <Text style={[styles.mode, { color: on ? '#555555' : '#8A8A8A' }]}>{mode === 'alpine' ? s.alpine : 'SOS · · · — — — · · ·'}</Text>
+      </View>
+      <Text style={[styles.hint, { color: on ? '#333333' : '#8A8A8A', marginBottom: insets.bottom + 40 }]}>{s.sosStop}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  full: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  hint: { fontSize: 14, marginBottom: 48 },
+  full: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 28 },
+  top: { gap: 4 },
+  brand: { fontSize: 30, fontWeight: '800' },
+  mode: { fontSize: 18, fontWeight: '600' },
+  hint: { fontSize: 15 },
 });

@@ -13,6 +13,7 @@ describe('tokenizer', () => {
 describe('guide search', () => {
   const cases: Array<[lang: 'en' | 'de', query: string, expected: string]> = [
     ['en', 'my friend is not breathing', 'cpr'],
+    ['en', 'My friend collapsed and is not breathing', 'cpr'],
     ['en', 'how do I remove a tick', 'bites'],
     ['en', 'burned my hand on the stove', 'burns'],
     ['en', 'lost in the woods and it gets dark', 'lost'],
@@ -21,6 +22,7 @@ describe('guide search', () => {
     ['en', 'twisted ankle', 'fractures'],
     ['en', 'blackout at home', 'power-outage'],
     ['de', 'Er atmet nicht mehr', 'cpr'],
+    ['de', 'Mein Freund ist zusammengebrochen und atmet nicht', 'cpr'],
     ['de', 'Zecke entfernen', 'bites'],
     ['de', 'Hand verbrannt', 'burns'],
     ['de', 'Ich habe mich im Wald verlaufen', 'lost'],

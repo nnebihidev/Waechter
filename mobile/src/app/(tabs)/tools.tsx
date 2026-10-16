@@ -4,15 +4,16 @@ import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { useLang, useT } from '../../state/settings';
 import { cardinal, formatDecimal, formatDMS, normalizeHeading } from '../../tools/geo';
-import { Body, Button, Card, H2 } from '../../ui/components';
-import { space, useTheme } from '../../ui/theme';
+import { Body, Button, Card, CardTitle, InfoNote, ScreenHeader } from '../../ui/components';
+import { space, type, useTheme } from '../../ui/theme';
 
 type Perm = 'unknown' | 'granted' | 'denied';
 
-function useSensors(active: boolean) {
+function useSensors() {
   const [perm, setPerm] = useState<Perm>('unknown');
   const [heading, setHeading] = useState<Location.LocationHeadingObject | null>(null);
   const [position, setPosition] = useState<Location.LocationObject | null>(null);
@@ -24,7 +25,6 @@ function useSensors(active: boolean) {
 
   useFocusEffect(
     useCallback(() => {
-      if (!active) return undefined;
       let cancelled = false;
       const subs: Location.LocationSubscription[] = [];
       void (async () => {
@@ -49,37 +49,88 @@ function useSensors(active: boolean) {
         cancelled = true;
         subs.forEach((s) => s.remove());
       };
-    }, [active, perm]),
+    }, [perm]),
   );
 
   return { perm, request, heading, position };
 }
 
-function CompassRose({ heading, label }: { heading: number; label: string }) {
+const DIAL = 240;
+const R = DIAL / 2;
+
+/** Rotating compass dial; the red index at the top marks the direction the phone points. */
+function CompassDial({ heading }: { heading: number }) {
   const t = useTheme();
   const lang = useLang();
-  const marks = lang === 'de' ? ['N', 'O', 'S', 'W'] : ['N', 'E', 'S', 'W'];
+  const labels = lang === 'de' ? ['N', 'O', 'S', 'W'] : ['N', 'E', 'S', 'W'];
+  const ticks = Array.from({ length: 72 }, (_, i) => i * 5);
   return (
-    <View style={styles.compassWrap}>
-      <View style={[styles.lubber, { backgroundColor: t.danger }]} />
-      <View style={[styles.rose, { borderColor: t.border, transform: [{ rotate: `${-heading}deg` }] }]}>
-        {marks.map((m, i) => (
-          <Text
-            key={m}
-            style={[
-              styles.mark,
-              { color: i === 0 ? t.danger : t.text, transform: [{ rotate: `${i * 90}deg` }, { translateY: -92 }] },
-            ]}
+    <Svg width={DIAL} height={DIAL + 14} viewBox={`0 -14 ${DIAL} ${DIAL + 14}`}>
+      <Path d={`M ${R - 9} -12 L ${R + 9} -12 L ${R} 6 Z`} fill={t.danger} />
+      <G rotation={-heading} origin={`${R}, ${R}`}>
+        <Circle cx={R} cy={R} r={R - 2} fill={t.card} stroke={t.border} strokeWidth={2} />
+        {ticks.map((deg) => {
+          const major = deg % 30 === 0;
+          const len = deg % 90 === 0 ? 16 : major ? 11 : 6;
+          return (
+            <Line
+              key={deg}
+              x1={R}
+              y1={8}
+              x2={R}
+              y2={8 + len}
+              stroke={deg === 0 ? t.danger : major ? t.text : t.faint}
+              strokeWidth={major ? 2 : 1}
+              rotation={deg}
+              origin={`${R}, ${R}`}
+            />
+          );
+        })}
+        {labels.map((label, i) => (
+          <SvgText
+            key={label}
+            x={R}
+            y={52}
+            fontSize={22}
+            fontWeight="800"
+            textAnchor="middle"
+            fill={i === 0 ? t.danger : t.text}
+            rotation={i * 90}
+            origin={`${R}, ${R}`}
           >
-            {m}
-          </Text>
+            {label}
+          </SvgText>
         ))}
+        {/* North-pointing needle drawn on the dial. */}
+        <Path d={`M ${R} ${R - 62} L ${R + 11} ${R} L ${R - 11} ${R} Z`} fill={t.danger} />
+        <Path d={`M ${R} ${R + 62} L ${R + 11} ${R} L ${R - 11} ${R} Z`} fill={t.faint} />
+        <Circle cx={R} cy={R} r={7} fill={t.card} stroke={t.text} strokeWidth={2} />
+      </G>
+    </Svg>
+  );
+}
+
+function CopyRow({ label, value, copyLabel }: { label: string; value: string; copyLabel: string }) {
+  const t = useTheme();
+  const [copied, setCopied] = useState(false);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${value}. ${copyLabel}`}
+      onPress={async () => {
+        await Clipboard.setStringAsync(value);
+        setCopied(true);
+      }}
+      style={styles.kv}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[type.footnote, { color: t.muted }]}>{label}</Text>
+        <Text selectable style={[styles.kvValue, { color: t.text }]}>
+          {value}
+        </Text>
       </View>
-      <Text style={[styles.heading, { color: t.text }]}>
-        {Math.round(heading)}° {cardinal(heading, lang)}
-      </Text>
-      <Text style={{ color: t.muted }}>{label}</Text>
-    </View>
+      <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={20} color={t.primary} />
+    </Pressable>
   );
 }
 
@@ -87,90 +138,97 @@ export default function ToolsScreen() {
   const t = useTheme();
   const s = useT();
   const lang = useLang();
-  const { perm, request, heading, position } = useSensors(true);
-  const [copied, setCopied] = useState(false);
+  const { perm, request, heading, position } = useSensors();
 
   const trueAvailable = heading !== null && heading.trueHeading >= 0;
   const deg = heading ? normalizeHeading(trueAvailable ? heading.trueHeading : heading.magHeading) : 0;
   const coords = position?.coords;
+  const divider = <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.divider }} />;
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
-      {perm !== 'granted' ? (
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader title={s.tabTools} />
+      <ScrollView contentContainerStyle={styles.wrap}>
+        {perm !== 'granted' ? (
+          <Card>
+            <Body muted>{s.locationDenied}</Body>
+            {perm === 'unknown' ? <Button label={s.locationAllow} icon="location-outline" onPress={() => void request()} /> : null}
+          </Card>
+        ) : null}
+
         <Card>
-          <Body muted>{s.locationDenied}</Body>
-          {perm === 'unknown' ? <Button label={s.locationAllow} icon="location" onPress={() => void request()} /> : null}
+          <CardTitle
+            title={s.compass}
+            right={
+              heading ? (
+                <View style={styles.inline}>
+                  <Ionicons name="navigate-outline" size={16} color={t.muted} />
+                  <Text style={[type.footnote, { color: t.muted }]}>{trueAvailable ? s.compassTrue : s.compassMagnetic}</Text>
+                </View>
+              ) : null
+            }
+          />
+          <View style={styles.compass}>
+            <CompassDial heading={deg} />
+            <Text style={[styles.heading, { color: t.text }]}>
+              {heading ? `${Math.round(deg)}°` : '—'}{' '}
+              <Text style={{ color: t.faint }}>{heading ? cardinal(deg, lang) : ''}</Text>
+            </Text>
+          </View>
+          {heading && heading.accuracy !== undefined && heading.accuracy <= 1 ? (
+            <InfoNote text={s.compassCalibrate} icon="sync-outline" />
+          ) : null}
         </Card>
-      ) : null}
 
-      <Card>
-        <H2>{s.compass}</H2>
-        {heading ? (
-          <>
-            <CompassRose heading={deg} label={trueAvailable ? s.compassTrue : s.compassMagnetic} />
-            {heading.accuracy !== undefined && heading.accuracy <= 1 ? <Body muted>{s.compassCalibrate}</Body> : null}
-          </>
-        ) : (
-          <Body muted>…</Body>
-        )}
-      </Card>
-
-      <Card>
-        <H2>{s.location}</H2>
-        {coords ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityHint={s.copy}
-            onPress={async () => {
-              await Clipboard.setStringAsync(formatDecimal(coords.latitude, coords.longitude));
-              setCopied(true);
-            }}
-            style={{ gap: space.xs }}
-          >
-            <Text selectable style={[styles.coords, { color: t.text }]}>
-              {formatDecimal(coords.latitude, coords.longitude)}
-            </Text>
-            <Text selectable style={{ color: t.text, fontSize: 16 }}>
-              {formatDMS(coords.latitude, coords.longitude, lang)}
-            </Text>
-            <Text style={{ color: t.muted }}>
-              {s.accuracy}: ±{Math.round(coords.accuracy ?? 0)} m
-              {coords.altitude != null ? ` · ${s.altitude}: ${Math.round(coords.altitude)} m` : ''}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: space.xs, alignItems: 'center' }}>
-              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color={t.primary} />
-              <Text style={{ color: t.primary, fontWeight: '600' }}>{copied ? s.copied : s.copy}</Text>
+        <Card>
+          <CardTitle title={s.location} right={<Ionicons name="location-outline" size={20} color={t.muted} />} />
+          {coords ? (
+            <View>
+              <CopyRow label={s.positionDecimal} value={formatDecimal(coords.latitude, coords.longitude)} copyLabel={s.copy} />
+              {divider}
+              <CopyRow label={s.positionDms} value={formatDMS(coords.latitude, coords.longitude, lang)} copyLabel={s.copy} />
+              {divider}
+              <View style={styles.kv}>
+                <Text style={[type.callout, { color: t.muted, flex: 1 }]}>{s.accuracy}</Text>
+                <Text style={[type.callout, { color: t.text, fontWeight: '700' }]}>± {Math.round(coords.accuracy ?? 0)} m</Text>
+              </View>
+              {coords.altitude != null ? (
+                <>
+                  {divider}
+                  <View style={styles.kv}>
+                    <Text style={[type.callout, { color: t.muted, flex: 1 }]}>{s.altitude}</Text>
+                    <Text style={[type.callout, { color: t.text, fontWeight: '700' }]}>{Math.round(coords.altitude)} m</Text>
+                  </View>
+                </>
+              ) : null}
             </View>
-          </Pressable>
-        ) : (
-          <Body muted>{perm === 'granted' ? s.locationWaiting : '—'}</Body>
-        )}
-        <Body muted>{s.locationHint}</Body>
-      </Card>
+          ) : (
+            <Body muted>{perm === 'granted' ? s.locationWaiting : '—'}</Body>
+          )}
+          <InfoNote text={s.locationHint} icon="radio-outline" />
+        </Card>
 
-      <Card>
-        <H2>{s.sos}</H2>
-        <Body muted>{s.sosBody}</Body>
-        <Button label={s.sosStart} icon="flashlight" variant="danger" onPress={() => router.push('/signal?mode=sos')} />
-        <H2>{s.alpine}</H2>
-        <Body muted>{s.alpineBody}</Body>
-        <Button
-          label={s.alpineStart}
-          icon="flashlight-outline"
-          variant="secondary"
-          onPress={() => router.push('/signal?mode=alpine')}
-        />
-      </Card>
-    </ScrollView>
+        <Card>
+          <CardTitle title={s.sos} subtitle={s.sosBody} />
+          <Button label={s.sosStart} icon="flash" variant="danger" onPress={() => router.push('/signal?mode=sos')} />
+          <Button
+            label={s.alpineStart}
+            icon="triangle-outline"
+            variant="dangerOutline"
+            onPress={() => router.push('/signal?mode=alpine')}
+          />
+          <InfoNote text={`${s.alpineBody} ${s.sosHint}`} icon="sunny-outline" />
+        </Card>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
-  compassWrap: { alignItems: 'center', paddingVertical: space.md, gap: space.sm },
-  lubber: { width: 4, height: 18, borderRadius: 2 },
-  rose: { width: 220, height: 220, borderRadius: 110, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
-  mark: { position: 'absolute', fontSize: 22, fontWeight: '800' },
-  heading: { fontSize: 32, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  coords: { fontSize: 24, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  wrap: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.md },
+  inline: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  compass: { alignItems: 'center', gap: space.sm },
+  heading: { fontSize: 40, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: -0.5 },
+  kv: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
+  kvValue: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
 });

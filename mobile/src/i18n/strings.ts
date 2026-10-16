@@ -4,8 +4,10 @@ const en = {
   tabAssistant: 'Assistant',
   tabTranslate: 'Translate',
   tabGuides: 'Guides',
+  tabGuidesShort: 'Guides',
   tabTools: 'Tools',
   tabSettings: 'Settings',
+  tabSettingsShort: 'Settings',
 
   offlineBadge: 'Offline · nothing leaves this phone',
 
@@ -23,11 +25,6 @@ const en = {
   // Assistant
   assistantPlaceholder: 'Describe your situation or ask anything…',
   assistantEmpty: 'Ask about first aid, getting lost, the weather, cooking, writing a message — anything. Everything runs on this phone.',
-  assistantSuggestions: [
-    'I twisted my ankle on a hike, what now?',
-    'How do I make stream water safe to drink?',
-    'Write a short sick note for my employer',
-  ],
   send: 'Send',
   stop: 'Stop',
   newChat: 'New chat',
@@ -83,7 +80,7 @@ const en = {
 
   // Settings
   language: 'Language',
-  languageAuto: 'Device language',
+  languageAuto: 'System',
   aiModel: 'AI model',
   modelReady: 'Ready',
   modelNotLoaded: 'Not loaded',
@@ -102,16 +99,36 @@ const en = {
   aboutBody:
     'One-time purchase — no subscription, no in-app purchases. The AI model is {model} ({license}). Guide content is general information and no substitute for professional training or medical advice.',
   storage: 'Storage used by models',
+  assistantGreeting: 'How can I help you stay safe and prepared?',
+  onDevice: 'Runs on this device',
+  emergencyCallTitle: 'Call 112 now',
+  emergencyCallBody: 'Then follow the steps below.',
+  callLabel: 'Call 112',
+  emergencyMode: 'Possible emergency',
+  translationLabel: 'Translation',
+  characters: 'characters',
+  languageHint: 'Choose the language of the app',
+  aiModelHint: 'Runs entirely on this device',
+  version: 'Version',
+  positionDecimal: 'Decimal',
+  positionDms: 'Degrees, minutes, seconds',
+  sosHint: 'Turn the screen brightness all the way up.',
+  loadingHint: 'Guides and tools already work in the meantime.',
+  guidesCount: 'guides',
+  oneTime: 'One-time purchase · no subscription',
+  loadModel: 'Load AI model',
 } as const;
 
-type Shape = { [K in keyof typeof en]: (typeof en)[K] extends readonly string[] ? readonly string[] : string };
+type Shape = { [K in keyof typeof en]: string };
 
 const de: Shape = {
   tabAssistant: 'Assistent',
   tabTranslate: 'Übersetzen',
   tabGuides: 'Anleitungen',
+  tabGuidesShort: 'Anleitungen',
   tabTools: 'Werkzeuge',
   tabSettings: 'Einstellungen',
+  tabSettingsShort: 'Optionen',
 
   offlineBadge: 'Offline · nichts verlässt dieses Telefon',
 
@@ -128,11 +145,6 @@ const de: Shape = {
   assistantPlaceholder: 'Beschreiben Sie Ihre Lage oder fragen Sie etwas…',
   assistantEmpty:
     'Fragen Sie zu Erster Hilfe, Orientierung, Wetter, Kochen, einer Nachricht — zu allem. Alles läuft auf diesem Telefon.',
-  assistantSuggestions: [
-    'Ich bin beim Wandern umgeknickt, was nun?',
-    'Wie mache ich Bachwasser trinkbar?',
-    'Schreiben Sie eine kurze Krankmeldung an meinen Arbeitgeber',
-  ],
   send: 'Senden',
   stop: 'Stopp',
   newChat: 'Neuer Chat',
@@ -186,7 +198,7 @@ const de: Shape = {
   alpineStart: 'Alpines Notsignal starten',
 
   language: 'Sprache',
-  languageAuto: 'Gerätesprache',
+  languageAuto: 'System',
   aiModel: 'KI-Modell',
   modelReady: 'Bereit',
   modelNotLoaded: 'Nicht geladen',
@@ -206,6 +218,74 @@ const de: Shape = {
   aboutBody:
     'Einmalkauf — kein Abo, keine In-App-Käufe. Das KI-Modell ist {model} ({license}). Die Anleitungen sind allgemeine Informationen und ersetzen keine Ausbildung oder ärztliche Beratung.',
   storage: 'Speicherbedarf der Modelle',
+  assistantGreeting: 'Wie kann ich Ihnen helfen – unterwegs und im Alltag?',
+  onDevice: 'Läuft auf diesem Gerät',
+  emergencyCallTitle: 'Jetzt 112 anrufen',
+  emergencyCallBody: 'Folgen Sie dann den Schritten unten.',
+  callLabel: '112 anrufen',
+  emergencyMode: 'Möglicher Notfall',
+  translationLabel: 'Übersetzung',
+  characters: 'Zeichen',
+  languageHint: 'Sprache der App wählen',
+  aiModelHint: 'Läuft vollständig auf diesem Gerät',
+  version: 'Version',
+  positionDecimal: 'Dezimal',
+  positionDms: 'Grad, Minuten, Sekunden',
+  sosHint: 'Drehen Sie die Bildschirmhelligkeit ganz hoch.',
+  loadingHint: 'Anleitungen und Werkzeuge funktionieren bereits.',
+  guidesCount: 'Anleitungen',
+  oneTime: 'Einmalkauf · kein Abo',
+  loadModel: 'KI-Modell laden',
+};
+
+export interface Suggestion {
+  icon: string;
+  title: string;
+  detail: string;
+  prompt: string;
+}
+
+export const SUGGESTIONS: Record<Lang, Suggestion[]> = {
+  en: [
+    {
+      icon: 'footsteps',
+      title: 'My ankle is swollen and tender',
+      detail: 'How do I support it on the trail and reduce the swelling?',
+      prompt: 'I twisted my ankle on a hike. It is swollen and tender. What should I do now?',
+    },
+    {
+      icon: 'water',
+      title: 'Is this stream water safe to drink?',
+      detail: 'What to look for and how to purify it with what I have.',
+      prompt: 'Is stream water safe to drink? How can I purify it with what I have?',
+    },
+    {
+      icon: 'document-text',
+      title: 'Write a short sick note',
+      detail: 'A polite message to my employer that I can fill in.',
+      prompt: 'Write a short, polite sick note to my employer that I can fill in.',
+    },
+  ],
+  de: [
+    {
+      icon: 'footsteps',
+      title: 'Mein Knöchel ist geschwollen',
+      detail: 'Wie stabilisiere ich ihn unterwegs und lindere die Schwellung?',
+      prompt: 'Ich bin beim Wandern umgeknickt. Der Knöchel ist geschwollen und schmerzt. Was soll ich jetzt tun?',
+    },
+    {
+      icon: 'water',
+      title: 'Kann ich dieses Bachwasser trinken?',
+      detail: 'Worauf ich achten muss und wie ich es aufbereite.',
+      prompt: 'Kann ich Bachwasser trinken? Wie bereite ich es mit einfachen Mitteln auf?',
+    },
+    {
+      icon: 'document-text',
+      title: 'Kurze Krankmeldung schreiben',
+      detail: 'Eine höfliche Nachricht an meinen Arbeitgeber zum Ausfüllen.',
+      prompt: 'Schreiben Sie eine kurze, höfliche Krankmeldung an meinen Arbeitgeber, die ich ausfüllen kann.',
+    },
+  ],
 };
 
 export type StringKey = keyof typeof en;

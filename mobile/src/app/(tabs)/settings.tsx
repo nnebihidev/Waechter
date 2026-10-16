@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
@@ -13,8 +14,8 @@ import {
 import type { Lang } from '../../i18n/lang';
 import { updateSettings, useSettings, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
-import { Body, Button, Card, H2, Progress } from '../../ui/components';
-import { radius, space, useTheme } from '../../ui/theme';
+import { Badge, Body, Button, Card, CardTitle, IconCircle, Progress, ScreenHeader } from '../../ui/components';
+import { radius, space, type, useTheme } from '../../ui/theme';
 
 function formatBytes(n: number): string {
   return n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : `${Math.round(n / 1e6)} MB`;
@@ -34,14 +35,14 @@ export default function SettingsScreen() {
     { value: 'en', label: 'English' },
   ];
 
-  const statusLabel =
-    ai.status === 'ready'
-      ? `${s.modelReady} · ${ai.source === 'imported' ? s.modelImported : s.modelBundled}`
-      : ai.status === 'missing'
-        ? s.modelMissingTitle
-        : ai.status === 'error'
-          ? s.modelError
-          : s.modelNotLoaded;
+  const badge =
+    ai.status === 'ready' ? (
+      <Badge label={s.modelReady} />
+    ) : ai.status === 'missing' || ai.status === 'error' ? (
+      <Badge label={ai.status === 'missing' ? s.modelMissingTitle : s.modelError} tone="danger" />
+    ) : (
+      <Badge label={s.modelNotLoaded} tone="neutral" />
+    );
 
   const onImport = async () => {
     setImportState('idle');
@@ -55,88 +56,134 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
-      <Card>
-        <H2>{s.language}</H2>
-        <View style={styles.segment}>
-          {langOptions.map((o) => {
-            const active = settings.language === o.value;
-            return (
-              <Pressable
-                key={o.value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() => updateSettings({ language: o.value })}
-                style={[
-                  styles.segmentItem,
-                  { borderColor: active ? t.primary : t.border, backgroundColor: active ? t.primary : 'transparent' },
-                ]}
-              >
-                <Text style={{ color: active ? t.onPrimary : t.text, fontWeight: '600' }}>{o.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Card>
-
-      <Card>
-        <H2>{s.aiModel}</H2>
-        <Body>{MODEL_MANIFEST.displayName}</Body>
-        <Body muted>{statusLabel}</Body>
-        {ai.status === 'loading' || ai.status === 'unpacking' ? (
-          <Progress label={ai.status === 'unpacking' ? s.modelUnpacking : s.modelLoading} value={ai.progress} />
-        ) : null}
-        {ai.status === 'idle' ? <Button label={s.retry} icon="play" onPress={() => void ensureModel()} /> : null}
-        {ai.error ? <Text style={{ color: t.danger }}>{ai.error}</Text> : null}
-        <Body muted>
-          {s.storage}: {formatBytes(modelStorageBytes())}
-        </Body>
-
-        {importState === 'copying' ? (
-          <Progress label={s.importing} />
-        ) : (
-          <Button label={s.importModel} icon="folder-open" variant="secondary" disabled={ai.busy} onPress={() => void onImport()} />
-        )}
-        {importState === 'invalid' ? <Text style={{ color: t.danger }}>{s.importInvalid}</Text> : null}
-        {importState === 'error' ? <Text style={{ color: t.danger }}>{importError}</Text> : null}
-        {ai.source === 'imported' ? (
-          <Button label={s.removeModel} icon="trash" variant="secondary" disabled={ai.busy} onPress={() => void removeImportedModel()} />
-        ) : null}
-
-        <View style={styles.switchRow}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ color: t.text, fontSize: 16, fontWeight: '600' }}>{s.gpu}</Text>
-            <Text style={{ color: t.muted, fontSize: 13 }}>{s.gpuHint}</Text>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenHeader title={s.tabSettings} />
+      <ScrollView contentContainerStyle={styles.wrap}>
+        <Card>
+          <CardTitle title={s.language} subtitle={s.languageHint} />
+          <View style={[styles.segment, { backgroundColor: t.bg, borderColor: t.border }]}>
+            {langOptions.map((o) => {
+              const active = settings.language === o.value;
+              return (
+                <Pressable
+                  key={o.value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => updateSettings({ language: o.value })}
+                  style={[styles.segmentItem, active && { backgroundColor: t.card, borderColor: t.primary }]}
+                >
+                  <Text style={{ color: active ? t.primary : t.text, fontWeight: active ? '800' : '600', fontSize: 14 }}>
+                    {o.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
-          <Switch
-            value={settings.gpu}
-            disabled={ai.busy}
-            onValueChange={(gpu) => {
-              updateSettings({ gpu });
-              void reloadModel();
-            }}
-          />
-        </View>
-      </Card>
+        </Card>
 
-      <Card>
-        <H2>{s.privacyTitle}</H2>
-        <Body muted>{s.privacyBody}</Body>
-      </Card>
+        <Card>
+          <CardTitle title={s.aiModel} subtitle={s.aiModelHint} />
+          <View style={[styles.model, { borderColor: t.border }]}>
+            <IconCircle name="hardware-chip-outline" tone="solid" size={48} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={[type.headline, { color: t.text, fontSize: 16 }]}>{MODEL_MANIFEST.displayName}</Text>
+              {badge}
+              <Text style={[type.footnote, { color: t.muted }]}>
+                {ai.source === 'imported' ? s.modelImported : s.modelBundled} · {s.storage}: {formatBytes(modelStorageBytes() || (ai.source === 'bundled' ? MODEL_MANIFEST.sizeBytes : 0))}
+              </Text>
+            </View>
+          </View>
+          {ai.status === 'loading' || ai.status === 'unpacking' ? (
+            <Progress label={ai.status === 'unpacking' ? s.modelUnpacking : s.modelLoading} value={ai.progress} />
+          ) : null}
+          {ai.status === 'idle' ? <Button label={s.loadModel} icon="play" onPress={() => void ensureModel()} /> : null}
+          {ai.error ? <Body muted small>{ai.error}</Body> : null}
 
-      <Card>
-        <H2>{s.aboutTitle}</H2>
-        <Body muted>
-          {s.aboutBody.replace('{model}', MODEL_MANIFEST.displayName).replace('{license}', MODEL_MANIFEST.license)}
-        </Body>
-      </Card>
-    </ScrollView>
+          {importState === 'copying' ? (
+            <Progress label={s.importing} />
+          ) : (
+            <Button label={s.importModel} icon="download-outline" variant="outline" disabled={ai.busy} onPress={() => void onImport()} />
+          )}
+          {importState === 'invalid' ? <Text style={{ color: t.danger }}>{s.importInvalid}</Text> : null}
+          {importState === 'error' ? <Text style={{ color: t.danger }}>{importError}</Text> : null}
+          {ai.source === 'imported' ? (
+            <Button
+              label={s.removeModel}
+              icon="trash-outline"
+              variant="dangerOutline"
+              disabled={ai.busy}
+              onPress={() => void removeImportedModel()}
+            />
+          ) : null}
+
+          <View style={[styles.switchRow, { borderTopColor: t.divider }]}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[type.headline, { color: t.text, fontSize: 16 }]}>{s.gpu}</Text>
+              <Text style={[type.footnote, { color: t.muted }]}>{s.gpuHint}</Text>
+            </View>
+            <Switch
+              value={settings.gpu}
+              disabled={ai.busy}
+              trackColor={{ true: t.accent, false: t.border }}
+              onValueChange={(gpu) => {
+                updateSettings({ gpu });
+                void reloadModel();
+              }}
+            />
+          </View>
+        </Card>
+
+        <Card>
+          <View style={styles.infoRow}>
+            <IconCircle name="shield-checkmark-outline" tone="solid" />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={[type.headline, { color: t.text }]}>{s.privacyTitle}</Text>
+              <Body muted small>{s.privacyBody}</Body>
+            </View>
+          </View>
+        </Card>
+
+        <Card>
+          <View style={styles.infoRow}>
+            <IconCircle name="information-circle-outline" tone="solid" />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={[type.headline, { color: t.text }]}>{s.aboutTitle}</Text>
+              <Text style={[type.footnote, { color: t.muted }]}>
+                {s.version} {Constants.expoConfig?.version ?? '1.0.0'}
+              </Text>
+              <Body muted small>
+                {s.aboutBody.replace('{model}', MODEL_MANIFEST.displayName).replace('{license}', MODEL_MANIFEST.license)}
+              </Body>
+            </View>
+          </View>
+        </Card>
+
+        <Text style={[type.footnote, { color: t.faint, textAlign: 'center' }]}>{s.oneTime}</Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
-  segment: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-  segmentItem: { borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.sm },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.sm },
+  wrap: { paddingHorizontal: space.lg, paddingBottom: space.xxl, gap: space.md },
+  segment: { flexDirection: 'row', borderRadius: radius.md, borderWidth: 1, padding: 3, gap: 3 },
+  segmentItem: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: space.xs,
+  },
+  model: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: space.md,
+  },
+  infoRow: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
 });

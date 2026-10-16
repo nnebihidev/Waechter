@@ -146,7 +146,8 @@ export async function generate(
   if (!ctx) throw new Error(aiStore.get().error ?? 'AI model not available');
   if (aiStore.get().busy) throw new Error('busy');
   aiStore.set({ busy: true });
-  await activateKeepAwakeAsync('ai');
+  // Keeping the screen on is a convenience; it must never block an answer.
+  await activateKeepAwakeAsync('ai').catch(() => undefined);
   let text = '';
   try {
     const result = await ctx.completion(
@@ -167,7 +168,9 @@ export async function generate(
     );
     return (result.content || result.text || text).trim();
   } finally {
-    deactivateKeepAwake('ai');
+    void Promise.resolve()
+      .then(() => deactivateKeepAwake('ai'))
+      .catch(() => undefined);
     aiStore.set({ busy: false });
   }
 }
