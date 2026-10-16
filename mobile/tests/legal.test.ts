@@ -31,6 +31,16 @@ describe('legal texts', () => {
     expect(TERMS_VERSION).toBeGreaterThanOrEqual(1);
   });
 
+  it('have a formal declaration with at least three mandatory confirmations', () => {
+    for (const lang of UI_LANGS) {
+      const l = LEGAL[lang];
+      expect(l.consentParagraphs.length).toBeGreaterThanOrEqual(4);
+      expect(l.consentChecks.length).toBeGreaterThanOrEqual(3);
+      expect(l.consentChecks.map((c) => c.id)).toEqual(LEGAL.en.consentChecks.map((c) => c.id));
+      expect(l.consentParagraphs.join(' ')).toMatch(/112/);
+    }
+  });
+
   it('say the essentials: 112, AI can be wrong, not medical advice, AI transparency', () => {
     for (const lang of UI_LANGS) {
       const text = allText(LEGAL[lang]).join(' ');

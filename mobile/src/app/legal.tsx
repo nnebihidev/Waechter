@@ -9,8 +9,8 @@ import { useLegal, useSettings } from '../state/settings';
 import { Chip, Display, Icon, Press, Reveal, Screen, SectionLabel, StatusStrip } from '../ui/kit';
 import { radius, space, type, useTheme } from '../ui/theme';
 
-type Section = 'terms' | 'privacy' | 'imprint' | 'licenses';
-const SECTIONS: Section[] = ['terms', 'privacy', 'imprint', 'licenses'];
+type Section = 'consent' | 'terms' | 'privacy' | 'imprint' | 'licenses';
+const SECTIONS: Section[] = ['consent', 'terms', 'privacy', 'imprint', 'licenses'];
 
 function Doc({ sections }: { sections: LegalSection[] }) {
   const t = useTheme();
@@ -37,7 +37,7 @@ export default function LegalScreen() {
   const l = useLegal();
   const { acceptedTerms } = useSettings();
   const insets = useSafeAreaInsets();
-  const titles: Record<Section, string> = { terms: l.termsTitle, privacy: l.privacyTitle, imprint: l.imprintTitle, licenses: l.licensesTitle };
+  const titles: Record<Section, string> = { consent: l.consentTitle, terms: l.termsTitle, privacy: l.privacyTitle, imprint: l.imprintTitle, licenses: l.licensesTitle };
 
   return (
     <Screen topo={false}>
@@ -71,7 +71,7 @@ export default function LegalScreen() {
               </View>
             </View>
           ) : (
-            <Doc sections={active === 'terms' ? l.terms : active === 'privacy' ? l.privacy : l.imprint} />
+            <Doc sections={active === 'consent' ? [{ heading: l.consentTitle, paragraphs: l.consentParagraphs }, { heading: acceptedTerms ? `${l.acceptedOn} ${new Date(acceptedTerms.at).toLocaleString()}` : '—', paragraphs: l.consentChecks.map((c) => `✓ ${c.label}`) }] : active === 'terms' ? l.terms : active === 'privacy' ? l.privacy : l.imprint} />
           )}
         </Reveal>
       </ScrollView>

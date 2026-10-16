@@ -272,6 +272,19 @@ export function Chip({ label, active, onPress, icon }: { label: string; active: 
   );
 }
 
+/** Square checkbox with label; the whole row toggles. */
+export function CheckRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  const t = useTheme();
+  return (
+    <Press accessibilityRole="checkbox" accessibilityState={{ checked }} accessibilityLabel={label} onPress={onToggle} scaleTo={0.99} style={styles.checkRow}>
+      <View style={[styles.checkBox, { borderColor: checked ? t.signal : t.line, backgroundColor: checked ? t.signal : t.surface }]}>
+        {checked ? <Icon name="check" size={16} color={t.onSignal} strokeWidth={2.6} /> : null}
+      </View>
+      <Text style={[type.callout, { color: t.text, flex: 1 }]}>{label}</Text>
+    </Press>
+  );
+}
+
 export function Badge({ label, tone = 'signal' }: { label: string; tone?: 'signal' | 'neutral' }) {
   const t = useTheme();
   return (
@@ -337,6 +350,8 @@ const styles = StyleSheet.create({
   kv: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 66 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 14, minHeight: 36 },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  checkBox: { width: 26, height: 26, borderWidth: 1.5, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   badge: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 4, alignSelf: 'flex-start' },
   note: { flexDirection: 'row', gap: 10, alignItems: 'center', borderLeftWidth: 2, paddingLeft: 12, paddingVertical: 4 },
   alert: { height: 40, borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },

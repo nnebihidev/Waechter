@@ -10,8 +10,8 @@ import { createStore, useStore } from './store';
 export interface Settings {
   language: Lang | 'auto';
   gpu: boolean;
-  /** Terms version the user accepted on first launch, with timestamp (ISO). */
-  acceptedTerms: { version: number; at: string } | null;
+  /** Consent given on first launch: terms version, ISO timestamp, ticked declaration ids, app version. */
+  acceptedTerms: { version: number; at: string; checks: string[]; appVersion: string } | null;
 }
 
 const DEFAULTS: Settings = {

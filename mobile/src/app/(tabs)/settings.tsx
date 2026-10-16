@@ -132,6 +132,12 @@ export default function SettingsScreen() {
             <ListRow title={l.privacyTitle} subtitle={s.privacyBody.split('.')[0] + '.'} left={<IconFrame name="shield" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'privacy' } })} />
             <ListRow title={l.imprintTitle} left={<IconFrame name="info" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'imprint' } })} />
             <ListRow title={l.licensesTitle} left={<IconFrame name="book" />} onPress={() => router.push({ pathname: '/legal', params: { section: 'licenses' } })} />
+            <ListRow
+              title={l.consentWithdraw}
+              subtitle={settings.acceptedTerms ? `${l.acceptedOn} ${new Date(settings.acceptedTerms.at).toLocaleString()} · v${settings.acceptedTerms.version}. ${l.consentWithdrawHint}` : l.consentWithdrawHint}
+              left={<IconFrame name="close" signal />}
+              onPress={() => updateSettings({ acceptedTerms: null })}
+            />
           </List>
         </Reveal>
 
