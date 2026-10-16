@@ -10,6 +10,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/next-env.d.ts',
       'packages/rules/fixtures/**',
+      // Separate Expo app with its own toolchain (npm, tsc, vitest).
+      'mobile/**',
     ],
   },
   js.configs.recommended,

@@ -61,6 +61,7 @@ infra             docker-compose, Caddyfile, Dockerfiles
 legal             German markdown sources for the legal pages
 docs/PLAN.md      build plan and phase status
 LEGAL.md          every placeholder to fill before going live
+mobile/           Kompass — separate offline AI companion app (Expo, iOS/Android); see mobile/README.md
 ```
 
 ## Launch-Checkliste (Deutschland, Solo-Gründung)

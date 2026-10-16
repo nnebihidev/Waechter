@@ -1,0 +1,2 @@
+# Model weights are fetched at build time by `npm run model:fetch`, never committed.
+files/

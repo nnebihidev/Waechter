@@ -28,6 +28,12 @@ English code/comments/commits.
 9. Scoring: 100 − 15·blocker − 6·warn − 1·info, clamped; traffic light from severities.
 10. LLM is optional (`LLM_PROVIDER=none` default); it may only summarize collected evidence, never assert new facts.
 
+## Other products in this repo
+
+- `mobile/` — **Kompass**, an offline AI companion app (Expo/React Native, npm, own toolchain;
+  not part of the pnpm workspace). Hard rule: the app never makes network requests —
+  `mobile/tests/offline.test.ts` enforces it. See `mobile/README.md`.
+
 ## Invariants — do not break
 
 - **No legal-advice language.** Never output "abmahnfest", "100 % rechtssicher" or any
