@@ -29,6 +29,22 @@ or before the model has loaded, the life-critical parts are still there.
 - No servers, accounts, licence checks or receipts. Purchase is handled by the store.
 - Chats are kept in memory only and never written to disk.
 
+## Design system
+
+Glassmorphism over a living backdrop, light ("Morgennebel") and dark ("Nachtwald"):
+
+- `src/ui/theme.ts` — colour tokens, glass tokens (fill, edge, blur), Manrope type scale.
+- `src/ui/glass.tsx` — `Screen` (opaque root + aurora `Backdrop` with slowly drifting radial
+  blobs), `Glass` (blur + translucent fill + light edge + shadow), `Press` (spring scale),
+  `Reveal` (staggered slide-in), `Pulse` (expanding ring, used by SOS).
+- `src/ui/icons.tsx` — hand-drawn 24-grid stroke icon set and the compass-star brand mark.
+  Guide data still names Ionicons glyphs; `resolveIcon` maps them.
+- `src/components/TabBar.tsx` — floating frosted tab bar with a spring-driven pill.
+- Fonts: Manrope (OFL) bundled via `@expo-google-fonts/manrope`; loaded before the splash hides.
+- Motion: `react-native-reanimated` v4; every animation respects Reduce Motion.
+- Android: `Glass` skips the blur pass by default (`blur` prop opts in) because view blur is
+  costly inside long lists; the tab bar and composer keep it. Verify on a mid-range device.
+
 ## Project layout
 
 ```

@@ -1,12 +1,29 @@
 import { router } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { aiStore, ensureModel, reloadModel } from '../ai/engine';
 import { useT } from '../state/settings';
 import { useStore } from '../state/store';
-import { Body, Button, Card, IconCircle, ProgressBar } from '../ui/components';
+import { Body, BrandMark, Button, Card, IconBadge, ProgressBar, Reveal } from '../ui/components';
 import { space, type, useTheme } from '../ui/theme';
+
+/** Slowly rotating brand mark — the app's "thinking" indicator. */
+function Spinner() {
+  const reduced = useReducedMotion();
+  const r = useSharedValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    r.value = withRepeat(withTiming(360, { duration: 6000, easing: Easing.linear }), -1, false);
+  }, [r, reduced]);
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${r.value}deg` }] }));
+  return (
+    <Animated.View style={style}>
+      <BrandMark size={64} />
+    </Animated.View>
+  );
+}
 
 /** Renders children once the on-device model is ready; otherwise explains why not. */
 export function ModelGate({ children }: { children: ReactNode }) {
@@ -20,57 +37,55 @@ export function ModelGate({ children }: { children: ReactNode }) {
 
   if (ai.status === 'ready') return <>{children}</>;
 
-  const guidesButton = (
-    <Button label={t.tabGuides} icon="book-outline" variant="outline" onPress={() => router.navigate('/guides')} />
-  );
+  const guidesButton = <Button label={t.tabGuides} icon="book" variant="glass" onPress={() => router.navigate('/guides')} />;
 
   return (
     <View style={styles.wrap}>
-      <Card style={styles.card}>
-        {ai.status === 'missing' ? (
-          <>
-            <IconCircle name="cloud-offline-outline" size={56} />
-            <Text style={[type.title, styles.center, { color: theme.text }]}>{t.modelMissingTitle}</Text>
-            <Body muted>{t.modelMissingBody}</Body>
-            <Button label={t.openSettings} icon="settings-outline" onPress={() => router.navigate('/settings')} />
-            {guidesButton}
-          </>
-        ) : ai.status === 'error' ? (
-          <>
-            <IconCircle name="alert-circle-outline" tone="dangerSoft" size={56} />
-            <Text style={[type.title, styles.center, { color: theme.text }]}>{t.modelError}</Text>
-            {ai.error ? <Body muted>{ai.error}</Body> : null}
-            <Button label={t.retry} icon="refresh" onPress={() => void reloadModel()} />
-            {guidesButton}
-          </>
-        ) : (
-          <>
-            <ActivityIndicator size="large" color={theme.accent} />
-            <Text style={[type.title, styles.center, { color: theme.text }]}>
-              {ai.status === 'unpacking' ? t.modelUnpacking : t.modelLoading}
-            </Text>
-            {ai.progress > 0 ? (
-              <>
-                <Text style={[type.callout, { color: theme.muted, fontVariant: ['tabular-nums'] }]}>
-                  {Math.round(ai.progress * 100)} %
-                </Text>
-                <View style={{ alignSelf: 'stretch' }}>
-                  <ProgressBar value={ai.progress} />
-                </View>
-              </>
-            ) : null}
-            {ai.lowMemory ? <Body muted small>{t.modelLowMemory}</Body> : null}
-            <Body muted small>{t.loadingHint}</Body>
-            {guidesButton}
-          </>
-        )}
-      </Card>
+      <Reveal>
+        <Card strong contentStyle={styles.card}>
+          {ai.status === 'missing' ? (
+            <>
+              <IconBadge name="cloudOff" size={64} />
+              <Text style={[type.title, styles.center, { color: theme.text }]}>{t.modelMissingTitle}</Text>
+              <Body muted>{t.modelMissingBody}</Body>
+              <Button label={t.openSettings} icon="sliders" onPress={() => router.navigate('/settings')} />
+              {guidesButton}
+            </>
+          ) : ai.status === 'error' ? (
+            <>
+              <IconBadge name="warning" tone="dangerSoft" size={64} />
+              <Text style={[type.title, styles.center, { color: theme.text }]}>{t.modelError}</Text>
+              {ai.error ? <Body muted small>{ai.error}</Body> : null}
+              <Button label={t.retry} icon="refresh" onPress={() => void reloadModel()} />
+              {guidesButton}
+            </>
+          ) : (
+            <>
+              <Spinner />
+              <Text style={[type.title, styles.center, { color: theme.text }]}>
+                {ai.status === 'unpacking' ? t.modelUnpacking : t.modelLoading}
+              </Text>
+              {ai.progress > 0 ? (
+                <>
+                  <Text style={[type.title, type.mono, { color: theme.primary }]}>{Math.round(ai.progress * 100)} %</Text>
+                  <View style={{ alignSelf: 'stretch' }}>
+                    <ProgressBar value={ai.progress} />
+                  </View>
+                </>
+              ) : null}
+              {ai.lowMemory ? <Body muted small>{t.modelLowMemory}</Body> : null}
+              <Body muted small>{t.loadingHint}</Body>
+              {guidesButton}
+            </>
+          )}
+        </Card>
+      </Reveal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: space.lg, justifyContent: 'center' },
-  card: { alignItems: 'center', paddingVertical: space.xxl, gap: space.lg },
+  card: { alignItems: 'center', paddingVertical: space.lg, gap: space.lg },
   center: { textAlign: 'center' },
 });

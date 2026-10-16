@@ -7,8 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '../state/settings';
 import { alpineTimeline, morsePulses, toTimeline } from '../tools/morse';
+import { font } from '../ui/theme';
 
-/** Full-screen light signal. Tap anywhere to close. */
+/** Full-screen light signal. Pure black/white for maximum contrast; tap anywhere to close. */
 export default function SignalScreen() {
   useKeepAwake();
   const s = useT();
@@ -25,19 +26,16 @@ export default function SignalScreen() {
   }, [index, timeline]);
 
   const on = timeline[index]?.on ?? false;
+  const fg = on ? '#111111' : '#FFFFFF';
+  const dim = on ? '#555555' : '#8A8A8A';
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={s.sosStop}
-      onPress={() => router.back()}
-      style={[styles.full, { backgroundColor: on ? '#FFFFFF' : '#000000' }]}
-    >
+    <Pressable accessibilityRole="button" accessibilityLabel={s.sosStop} onPress={() => router.back()} style={[styles.full, { backgroundColor: on ? '#FFFFFF' : '#000000' }]}>
       <StatusBar hidden />
       <View style={[styles.top, { paddingTop: insets.top + 24 }]}>
-        <Text style={[styles.brand, { color: on ? '#111111' : '#FFFFFF' }]}>Kompass</Text>
-        <Text style={[styles.mode, { color: on ? '#555555' : '#8A8A8A' }]}>{mode === 'alpine' ? s.alpine : 'SOS · · · — — — · · ·'}</Text>
+        <Text style={[font.extrabold, styles.brand, { color: fg }]}>Kompass</Text>
+        <Text style={[font.semibold, styles.mode, { color: dim }]}>{mode === 'alpine' ? s.alpine : 'SOS  · · ·  — — —  · · ·'}</Text>
       </View>
-      <Text style={[styles.hint, { color: on ? '#333333' : '#8A8A8A', marginBottom: insets.bottom + 40 }]}>{s.sosStop}</Text>
+      <Text style={[font.medium, styles.hint, { color: dim, marginBottom: insets.bottom + 40 }]}>{s.sosStop}</Text>
     </Pressable>
   );
 }
@@ -45,7 +43,7 @@ export default function SignalScreen() {
 const styles = StyleSheet.create({
   full: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 28 },
   top: { gap: 4 },
-  brand: { fontSize: 30, fontWeight: '800' },
-  mode: { fontSize: 18, fontWeight: '600' },
+  brand: { fontSize: 30 },
+  mode: { fontSize: 18 },
   hint: { fontSize: 15 },
 });
