@@ -1,129 +1,91 @@
 import { useColorScheme, type TextStyle } from 'react-native';
 
-// Two moods: "Morgennebel" (light) and "Nachtwald" (dark). Glass only reads when it
-// floats over colour, so every screen gets a soft aurora backdrop (see glass.tsx).
-
-export interface Blob {
-  color: string;
-  opacity: number;
-  size: number;
-  /** Position as a fraction of the screen (0..1). */
-  x: number;
-  y: number;
-}
+// "Expedition": instrument-panel look. Near-black surfaces, warm off-white text and
+// one signal colour (orange) that is both brand and emergency. The light variant
+// ("Tag") keeps the same structure on warm grey for use in direct sunlight.
 
 type Scheme = 'light' | 'dark';
 
-const light = {
-  scheme: 'light' as Scheme,
-  gradient: ['#EEF3EC', '#E4EDE6', '#F4EFE4'],
-  blobs: [
-    { color: '#5CCB96', opacity: 0.55, size: 520, x: 0.85, y: 0.02 },
-    { color: '#F2BE5E', opacity: 0.42, size: 420, x: 0.0, y: 0.45 },
-    { color: '#7CCFCB', opacity: 0.42, size: 460, x: 0.92, y: 0.88 },
-  ] as Blob[],
-  text: '#0F1F17',
-  muted: '#53645B',
-  faint: '#8A9A91',
-  primary: '#167A53',
-  primaryStrong: '#0E5C3D',
-  onPrimary: '#FFFFFF',
-  accent: '#1DB87A',
-  amber: '#E6A232',
-  danger: '#D2362A',
-  dangerFill: '#D93B2E',
-  onDanger: '#FFFFFF',
-  dangerSoft: 'rgba(217,59,46,0.12)',
-  dangerBorder: 'rgba(217,59,46,0.35)',
-  glass: 'rgba(255,255,255,0.55)',
-  glassStrong: 'rgba(255,255,255,0.72)',
-  glassBorder: 'rgba(255,255,255,0.75)',
-  glassHighlight: 'rgba(255,255,255,0.95)',
-  glassShadow: 'rgba(15,31,23,0.16)',
-  glassTint: 'light' as 'light' | 'dark',
-  blur: 38,
-  divider: 'rgba(15,31,23,0.08)',
-  userBubble: 'rgba(22,122,83,0.14)',
-  inputFill: 'rgba(255,255,255,0.6)',
-  tabInactive: '#60716A',
-  tabPill: 'rgba(22,122,83,0.14)',
-  solidCard: '#FFFFFF',
-};
-
-const dark: typeof light = {
+const dark = {
   scheme: 'dark' as Scheme,
-  gradient: ['#06100B', '#0A1A12', '#0E1713'],
-  blobs: [
-    { color: '#22C486', opacity: 0.5, size: 560, x: 0.85, y: 0.0 },
-    { color: '#1E9AB0', opacity: 0.38, size: 460, x: 0.0, y: 0.45 },
-    { color: '#E0A040', opacity: 0.26, size: 420, x: 0.92, y: 0.9 },
-  ],
-  text: '#EAF2EC',
-  muted: '#A2B5A9',
-  faint: '#6E8076',
-  primary: '#4FE3A3',
-  primaryStrong: '#7BEDBC',
-  onPrimary: '#06110B',
-  accent: '#4FE3A3',
-  amber: '#F2B950',
-  danger: '#FF6F60',
-  dangerFill: '#D43C31',
-  onDanger: '#FFFFFF',
-  dangerSoft: 'rgba(255,111,96,0.14)',
-  dangerBorder: 'rgba(255,111,96,0.4)',
-  glass: 'rgba(255,255,255,0.07)',
-  glassStrong: 'rgba(255,255,255,0.11)',
-  glassBorder: 'rgba(255,255,255,0.14)',
-  glassHighlight: 'rgba(255,255,255,0.28)',
-  glassShadow: 'rgba(0,0,0,0.5)',
-  glassTint: 'dark',
-  blur: 50,
-  divider: 'rgba(255,255,255,0.08)',
-  userBubble: 'rgba(79,227,163,0.16)',
-  inputFill: 'rgba(255,255,255,0.06)',
-  tabInactive: '#8EA094',
-  tabPill: 'rgba(79,227,163,0.18)',
-  solidCard: '#14211A',
+  bg: '#0A0C0E',
+  surface: '#121518',
+  surface2: '#181C20',
+  line: '#242A30',
+  lineSoft: '#1A1F24',
+  text: '#F3F1EA',
+  muted: '#8B939B',
+  dim: '#5A626A',
+  signal: '#FF6B1A',
+  signalSoft: 'rgba(255,107,26,0.14)',
+  onSignal: '#0A0C0E',
+  topo: '#1C2126',
+  dialInner: '#1A1F24',
+  dialOuter: '#0A0C0E',
+  needleTail: '#2A3137',
+  tickMajor: '#C9CDD1',
+  tickMid: '#6E767E',
+  tickMinor: '#3A4149',
+  selection: 'rgba(255,107,26,0.35)',
 };
 
-export type Theme = typeof light;
+const light: typeof dark = {
+  scheme: 'light' as Scheme,
+  bg: '#F1EFE9',
+  surface: '#FFFFFF',
+  surface2: '#F7F5F0',
+  line: '#D9D5CC',
+  lineSoft: '#E6E2D9',
+  text: '#121416',
+  muted: '#5D636A',
+  dim: '#8E949B',
+  signal: '#E85A0A',
+  signalSoft: 'rgba(232,90,10,0.12)',
+  onSignal: '#FFFFFF',
+  topo: '#E2DED5',
+  dialInner: '#FFFFFF',
+  dialOuter: '#ECE9E2',
+  needleTail: '#B9BEC4',
+  tickMajor: '#2B3035',
+  tickMid: '#80878E',
+  tickMinor: '#C4C8CC',
+  selection: 'rgba(232,90,10,0.3)',
+};
+
+export type Theme = typeof dark;
 
 export function useTheme(): Theme {
-  return useColorScheme() === 'dark' ? dark : light;
+  return useColorScheme() === 'light' ? light : dark;
 }
 
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 12, md: 18, lg: 24, xl: 30, pill: 999 } as const;
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
+export const radius = { sm: 4, md: 6, pill: 999 } as const;
 
-/** Manrope is bundled with the app (OFL); each weight is its own family on native. */
+/** Display: Barlow Condensed. Body: Manrope. Both bundled (OFL). */
 export const font = {
-  medium: { fontFamily: 'Manrope_500Medium' },
-  semibold: { fontFamily: 'Manrope_600SemiBold' },
-  bold: { fontFamily: 'Manrope_700Bold' },
-  extrabold: { fontFamily: 'Manrope_800ExtraBold' },
+  display: { fontFamily: 'BarlowCondensed_700Bold' },
+  displayMedium: { fontFamily: 'BarlowCondensed_600SemiBold' },
+  label: { fontFamily: 'BarlowCondensed_600SemiBold' },
+  body: { fontFamily: 'Manrope_500Medium' },
+  bodyStrong: { fontFamily: 'Manrope_700Bold' },
 } as const;
 
-export const type: {
-  display: TextStyle;
-  title: TextStyle;
-  headline: TextStyle;
-  body: TextStyle;
-  callout: TextStyle;
-  footnote: TextStyle;
-  caption: TextStyle;
-  overline: TextStyle;
-  mono: TextStyle;
-} = {
-  display: { ...font.extrabold, fontSize: 36, lineHeight: 42, letterSpacing: -1 },
-  title: { ...font.extrabold, fontSize: 26, lineHeight: 32, letterSpacing: -0.5 },
-  headline: { ...font.bold, fontSize: 17, lineHeight: 22 },
-  body: { ...font.medium, fontSize: 16, lineHeight: 24 },
-  callout: { ...font.medium, fontSize: 15, lineHeight: 21 },
-  footnote: { ...font.medium, fontSize: 13, lineHeight: 18 },
-  caption: { ...font.semibold, fontSize: 12, lineHeight: 16 },
-  overline: { ...font.extrabold, fontSize: 12, lineHeight: 16, letterSpacing: 1.4, textTransform: 'uppercase' },
-  mono: { ...font.bold, fontVariant: ['tabular-nums'] },
+export const type: Record<
+  'hero' | 'display' | 'title' | 'number' | 'numberSmall' | 'headline' | 'body' | 'callout' | 'footnote' | 'label' | 'labelSmall' | 'tab',
+  TextStyle
+> = {
+  hero: { ...font.display, fontSize: 72, lineHeight: 66, textTransform: 'uppercase', letterSpacing: -0.5 },
+  display: { ...font.display, fontSize: 52, lineHeight: 48, textTransform: 'uppercase', letterSpacing: -0.5 },
+  title: { ...font.display, fontSize: 26, lineHeight: 28, textTransform: 'uppercase', letterSpacing: 0.2 },
+  number: { ...font.display, fontSize: 104, lineHeight: 96, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  numberSmall: { ...font.displayMedium, fontSize: 30, lineHeight: 32, letterSpacing: -0.3, fontVariant: ['tabular-nums'] },
+  headline: { ...font.bodyStrong, fontSize: 16, lineHeight: 22 },
+  body: { ...font.body, fontSize: 15, lineHeight: 23 },
+  callout: { ...font.body, fontSize: 14, lineHeight: 21 },
+  footnote: { ...font.body, fontSize: 12.5, lineHeight: 18 },
+  label: { ...font.label, fontSize: 12, lineHeight: 14, letterSpacing: 2, textTransform: 'uppercase' },
+  labelSmall: { ...font.label, fontSize: 10.5, lineHeight: 12, letterSpacing: 1.8, textTransform: 'uppercase' },
+  tab: { ...font.label, fontSize: 10, lineHeight: 12, letterSpacing: 1.4, textTransform: 'uppercase' },
 };
 
-/** Floating tab bar height incl. its bottom margin — screens pad their content by this. */
-export const TAB_BAR_SPACE = 96;
+export const TAB_BAR_HEIGHT = 64;

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '../state/settings';
 import { alpineTimeline, morsePulses, toTimeline } from '../tools/morse';
-import { font } from '../ui/theme';
+import { font, type } from '../ui/theme';
 
 /** Full-screen light signal. Pure black/white for maximum contrast; tap anywhere to close. */
 export default function SignalScreen() {
@@ -26,24 +26,22 @@ export default function SignalScreen() {
   }, [index, timeline]);
 
   const on = timeline[index]?.on ?? false;
-  const fg = on ? '#111111' : '#FFFFFF';
-  const dim = on ? '#555555' : '#8A8A8A';
+  const fg = on ? '#0A0C0E' : '#F3F1EA';
+  const dim = on ? '#5A626A' : '#8B939B';
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={s.sosStop} onPress={() => router.back()} style={[styles.full, { backgroundColor: on ? '#FFFFFF' : '#000000' }]}>
       <StatusBar hidden />
       <View style={[styles.top, { paddingTop: insets.top + 24 }]}>
-        <Text style={[font.extrabold, styles.brand, { color: fg }]}>Kompass</Text>
-        <Text style={[font.semibold, styles.mode, { color: dim }]}>{mode === 'alpine' ? s.alpine : 'SOS  · · ·  — — —  · · ·'}</Text>
+        <Text style={[type.display, { color: fg }]}>Kompass</Text>
+        <Text style={[type.label, { color: dim, marginTop: 6 }]}>{mode === 'alpine' ? s.alpine : `SOS  ${s.sosMorse}`}</Text>
       </View>
-      <Text style={[font.medium, styles.hint, { color: dim, marginBottom: insets.bottom + 40 }]}>{s.sosStop}</Text>
+      <Text style={[font.body, styles.hint, { color: dim, marginBottom: insets.bottom + 40 }]}>{s.sosStop}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   full: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 28 },
-  top: { gap: 4 },
-  brand: { fontSize: 30 },
-  mode: { fontSize: 18 },
+  top: {},
   hint: { fontSize: 15 },
 });

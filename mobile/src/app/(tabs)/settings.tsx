@@ -1,43 +1,35 @@
 import Constants from 'expo-constants';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { aiStore, ensureModel, importModel, MODEL_MANIFEST, modelStorageBytes, reloadModel, removeImportedModel } from '../../ai/engine';
+import { aiStatusLabel, ProgressRule } from '../../components/ModelGate';
 import type { Lang } from '../../i18n/lang';
 import { updateSettings, useSettings, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
-import { Badge, Body, Button, Card, CardTitle, Glass, IconBadge, Press, Progress, Reveal, ScreenHeader, Screen } from '../../ui/components';
-import { font, radius, space, TAB_BAR_SPACE, type, useTheme } from '../../ui/theme';
+import { Badge, Body, Display, IconFrame, Press, Reveal, Screen, SectionLabel, Slab, StatusStrip } from '../../ui/kit';
+import { radius, space, TAB_BAR_HEIGHT, type, useTheme } from '../../ui/theme';
 
 function formatBytes(n: number): string {
   return n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : `${Math.round(n / 1e6)} MB`;
 }
 
-/** Segmented control with a sliding glass thumb. */
 function Segmented<T extends string>({ options, value, onChange }: { options: Array<{ value: T; label: string }>; value: T; onChange: (v: T) => void }) {
   const t = useTheme();
-  const [width, setWidth] = useState(0);
-  const slot = width / options.length;
-  const x = useSharedValue(0);
-  const index = Math.max(0, options.findIndex((o) => o.value === value));
-  useEffect(() => {
-    x.value = withSpring(index * slot, { damping: 18, stiffness: 200 });
-  }, [index, slot, x]);
-  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
-    <View style={[styles.segment, { backgroundColor: t.divider }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width - 6)}>
-      {slot > 0 ? (
-        <Animated.View style={[styles.thumb, { width: slot }, thumb]}>
-          <LinearGradient colors={t.scheme === 'dark' ? ['#5CE9AE', '#22B57E'] : ['#1F8F62', '#126244']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-        </Animated.View>
-      ) : null}
-      {options.map((o) => {
+    <View style={[styles.segment, { borderColor: t.line }]}>
+      {options.map((o, i) => {
         const active = o.value === value;
         return (
-          <Press key={o.value} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => onChange(o.value)} style={styles.segmentItem} scaleTo={0.96}>
-            <Text style={[active ? font.extrabold : font.semibold, { color: active ? t.onPrimary : t.text, fontSize: 14 }]}>{o.label}</Text>
+          <Press
+            key={o.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(o.value)}
+            scaleTo={0.97}
+            style={[styles.segmentItem, { backgroundColor: active ? t.signal : 'transparent' }, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: t.line }]}
+          >
+            <Text style={[type.label, { color: active ? t.onSignal : t.text, letterSpacing: 1.2 }]}>{o.label}</Text>
           </Press>
         );
       })}
@@ -59,15 +51,6 @@ export default function SettingsScreen() {
     { value: 'en', label: 'English' },
   ];
 
-  const badge =
-    ai.status === 'ready' ? (
-      <Badge label={s.modelReady} />
-    ) : ai.status === 'missing' || ai.status === 'error' ? (
-      <Badge label={ai.status === 'missing' ? s.modelMissingTitle : s.modelError} tone="danger" />
-    ) : (
-      <Badge label={s.modelNotLoaded} tone="neutral" />
-    );
-
   const onImport = async () => {
     setImportState('idle');
     try {
@@ -81,101 +64,85 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title={s.tabSettings} />
+      <StatusStrip left={aiStatusLabel(ai, s)} rightStrong={s.version} right={Constants.expoConfig?.version ?? '1.0.0'} />
       <ScrollView contentContainerStyle={styles.wrap} showsVerticalScrollIndicator={false}>
         <Reveal>
-          <Card>
-            <CardTitle title={s.language} subtitle={s.languageHint} icon="globe" />
-            <Segmented options={langOptions} value={settings.language} onChange={(language) => updateSettings({ language })} />
-          </Card>
+          <Display style={{ marginTop: space.lg }}>{s.tabSettings}</Display>
         </Reveal>
 
-        <Reveal index={1}>
-          <Card>
-            <CardTitle title={s.aiModel} subtitle={s.aiModelHint} icon="chip" />
-            <Glass radiusSize="md" strong>
-              <View style={styles.model}>
-                <IconBadge name="sparkle" tone="solid" size={48} />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={[type.headline, { color: t.text, fontSize: 16 }]}>{MODEL_MANIFEST.displayName}</Text>
-                  {badge}
-                  <Text style={[type.footnote, { color: t.muted }]}>
-                    {ai.source === 'imported' ? s.modelImported : s.modelBundled} · {s.storage}:{' '}
-                    {formatBytes(modelStorageBytes() || (ai.source === 'bundled' ? MODEL_MANIFEST.sizeBytes : 0))}
-                  </Text>
-                </View>
-              </View>
-            </Glass>
-            {ai.status === 'loading' || ai.status === 'unpacking' ? <Progress label={ai.status === 'unpacking' ? s.modelUnpacking : s.modelLoading} value={ai.progress} /> : null}
-            {ai.status === 'idle' ? <Button label={s.loadModel} icon="play" onPress={() => void ensureModel()} /> : null}
-            {ai.error ? <Body muted small>{ai.error}</Body> : null}
+        <Reveal index={1} style={styles.group}>
+          <SectionLabel label={s.language} />
+          <Segmented options={langOptions} value={settings.language} onChange={(language) => updateSettings({ language })} />
+        </Reveal>
 
-            {importState === 'copying' ? (
-              <Progress label={s.importing} />
-            ) : (
-              <Button label={s.importModel} icon="download" variant="glass" disabled={ai.busy} onPress={() => void onImport()} />
-            )}
-            {importState === 'invalid' ? <Text style={[type.callout, { color: t.danger }]}>{s.importInvalid}</Text> : null}
-            {importState === 'error' ? <Text style={[type.callout, { color: t.danger }]}>{importError}</Text> : null}
-            {ai.source === 'imported' ? <Button label={s.removeModel} icon="trash" variant="dangerGlass" disabled={ai.busy} onPress={() => void removeImportedModel()} /> : null}
-
-            <View style={[styles.switchRow, { borderTopColor: t.divider }]}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[type.headline, { color: t.text, fontSize: 16 }]}>{s.gpu}</Text>
-                <Text style={[type.footnote, { color: t.muted }]}>{s.gpuHint}</Text>
-              </View>
-              <Switch
-                value={settings.gpu}
-                disabled={ai.busy}
-                trackColor={{ true: t.accent, false: t.divider }}
-                onValueChange={(gpu) => {
-                  updateSettings({ gpu });
-                  void reloadModel();
-                }}
-              />
+        <Reveal index={2} style={styles.group}>
+          <SectionLabel label={s.aiModel} />
+          <View style={[styles.model, { borderColor: t.line, backgroundColor: t.surface }]}>
+            <IconFrame name="chip" size={44} signal={ai.status === 'ready'} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={[type.headline, { color: t.text }]}>{MODEL_MANIFEST.displayName}</Text>
+              <Badge label={ai.status === 'ready' ? s.modelReady : ai.status === 'missing' ? s.modelMissingTitle : ai.status === 'error' ? s.modelError : s.modelNotLoaded} tone={ai.status === 'ready' ? 'signal' : 'neutral'} />
+              <Text style={[type.footnote, { color: t.muted }]}>
+                {ai.source === 'imported' ? s.modelImported : s.modelBundled} · {formatBytes(modelStorageBytes() || (ai.source === 'bundled' ? MODEL_MANIFEST.sizeBytes : 0))}
+              </Text>
             </View>
-          </Card>
-        </Reveal>
-
-        <Reveal index={2}>
-          <Card>
-            <View style={styles.infoRow}>
-              <IconBadge name="shield" tone="solid" />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={[type.headline, { color: t.text }]}>{s.privacyTitle}</Text>
-                <Body muted small>{s.privacyBody}</Body>
-              </View>
+          </View>
+          {ai.status === 'loading' || ai.status === 'unpacking' ? (
+            <View>
+              <Text style={[type.labelSmall, { color: t.signal }]}>
+                {ai.status === 'unpacking' ? s.modelUnpacking : s.modelLoading} {Math.round(ai.progress * 100)}%
+              </Text>
+              <ProgressRule value={ai.progress} />
             </View>
-          </Card>
-        </Reveal>
-
-        <Reveal index={3}>
-          <Card>
-            <View style={styles.infoRow}>
-              <IconBadge name="info" tone="amber" />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={[type.headline, { color: t.text }]}>{s.aboutTitle}</Text>
-                <Text style={[type.footnote, { color: t.muted }]}>
-                  {s.version} {Constants.expoConfig?.version ?? '1.0.0'}
-                </Text>
-                <Body muted small>{s.aboutBody.replace('{model}', MODEL_MANIFEST.displayName).replace('{license}', MODEL_MANIFEST.license)}</Body>
-              </View>
+          ) : null}
+          {ai.status === 'idle' ? <Slab label={s.loadModel} icon="play" compact onPress={() => void ensureModel()} /> : null}
+          {ai.error ? <Body muted small>{ai.error}</Body> : null}
+          {importState === 'copying' ? (
+            <Text style={[type.labelSmall, { color: t.signal }]}>{s.importing}</Text>
+          ) : (
+            <Slab label={s.importModel} icon="download" variant="neutral" compact disabled={ai.busy} onPress={() => void onImport()} />
+          )}
+          {importState === 'invalid' ? <Text style={[type.callout, { color: t.signal }]}>{s.importInvalid}</Text> : null}
+          {importState === 'error' ? <Text style={[type.callout, { color: t.signal }]}>{importError}</Text> : null}
+          {ai.source === 'imported' ? <Slab label={s.removeModel} icon="trash" variant="ghost" compact disabled={ai.busy} onPress={() => void removeImportedModel()} /> : null}
+          <View style={[styles.switchRow, { borderTopColor: t.line }]}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[type.headline, { color: t.text }]}>{s.gpu}</Text>
+              <Text style={[type.footnote, { color: t.muted }]}>{s.gpuHint}</Text>
             </View>
-          </Card>
+            <Switch
+              value={settings.gpu}
+              disabled={ai.busy}
+              trackColor={{ true: t.signal, false: t.line }}
+              thumbColor={t.text}
+              onValueChange={(gpu) => {
+                updateSettings({ gpu });
+                void reloadModel();
+              }}
+            />
+          </View>
         </Reveal>
 
-        <Text style={[type.footnote, { color: t.faint, textAlign: 'center' }]}>{s.oneTime}</Text>
+        <Reveal index={3} style={styles.group}>
+          <SectionLabel label={s.privacyTitle} />
+          <Body muted small>{s.privacyBody}</Body>
+        </Reveal>
+
+        <Reveal index={4} style={styles.group}>
+          <SectionLabel label={s.aboutTitle} />
+          <Body muted small>{s.aboutBody.replace('{model}', MODEL_MANIFEST.displayName).replace('{license}', MODEL_MANIFEST.license)}</Body>
+          <Text style={[type.labelSmall, { color: t.dim, marginTop: space.sm }]}>{s.oneTime}</Text>
+        </Reveal>
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: space.lg, paddingBottom: TAB_BAR_SPACE, gap: space.md },
-  segment: { flexDirection: 'row', borderRadius: radius.md, padding: 3 },
-  thumb: { position: 'absolute', left: 3, top: 3, bottom: 3, borderRadius: radius.sm, overflow: 'hidden' },
-  segmentItem: { flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs },
-  model: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
+  wrap: { paddingHorizontal: space.xl, paddingBottom: TAB_BAR_HEIGHT },
+  group: { marginTop: space.xl, gap: space.md },
+  segment: { flexDirection: 'row', borderWidth: 1, borderRadius: radius.sm, overflow: 'hidden' },
+  segmentItem: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs },
+  model: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.sm, padding: space.md },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
-  infoRow: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
 });

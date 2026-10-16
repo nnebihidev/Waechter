@@ -1,41 +1,32 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
-import { aiStore, generate, PROMPT_BUDGET_TOKENS, stopGeneration } from '../../ai/engine';
+import { aiStore, ensureModel, generate, PROMPT_BUDGET_TOKENS, stopGeneration } from '../../ai/engine';
 import { buildAssistantMessages, looksLikeEmergency, plainifyMarkdown, type ChatMessage } from '../../ai/prompts';
-import { ModelGate } from '../../components/ModelGate';
+import { aiStatusLabel, ProgressRule } from '../../components/ModelGate';
 import type { Lang } from '../../i18n/lang';
-import { SUGGESTIONS } from '../../i18n/strings';
 import { GUIDES, guideById } from '../../knowledge/guides';
 import { indexFor, pickReferences } from '../../knowledge/search';
 import { chatStore, nextId, updateEntry, type ChatEntry } from '../../state/chat';
 import { useLang, useT } from '../../state/settings';
 import { useStore } from '../../state/store';
-import { BrandMark, EmergencyCallCard, Glass, Icon, IconBadge, Press, Reveal, ScreenHeader, Screen } from '../../ui/components';
-import { font, radius, space, TAB_BAR_SPACE, type, useTheme } from '../../ui/theme';
+import { cardinal, normalizeHeading } from '../../tools/geo';
+import { useSensors } from '../../tools/useSensors';
+import { AlertBar, Body, Caret, Hero, Hud, Icon, Press, Reveal, Screen, SectionLabel, StatusStrip, Tile, callEmergency } from '../../ui/kit';
+import { font, radius, space, type, useTheme } from '../../ui/theme';
 
 async function send(text: string, lang: Lang, errorText: string) {
   const question = text.trim();
   if (!question || aiStore.get().busy) return;
-
   const history: ChatMessage[] = chatStore
     .get()
     .entries.filter((e) => !e.failed)
     .map((e) => ({ role: e.role, content: e.content }));
   const references = pickReferences(indexFor(GUIDES, lang).search(question));
   const user: ChatEntry = { id: nextId(), role: 'user', content: question, emergency: looksLikeEmergency(question) };
-  const answer: ChatEntry = {
-    id: nextId(),
-    role: 'assistant',
-    content: '',
-    streaming: true,
-    sources: references.map((g) => g.id),
-  };
+  const answer: ChatEntry = { id: nextId(), role: 'assistant', content: '', streaming: true, sources: references.map((g) => g.id) };
   chatStore.set((s) => ({ entries: [...s.entries, user, answer], draft: '' }));
-
   const messages = buildAssistantMessages({ lang, history, userText: question, references, budgetTokens: PROMPT_BUDGET_TOKENS });
   try {
     const final = await generate(messages, (partial) => updateEntry(answer.id, { content: partial }));
@@ -46,225 +37,166 @@ async function send(text: string, lang: Lang, errorText: string) {
   }
 }
 
-/** Blinking caret shown while the answer streams. */
-function Caret() {
-  const t = useTheme();
-  const o = useSharedValue(1);
-  useEffect(() => {
-    o.value = withRepeat(withTiming(0, { duration: 500, easing: Easing.inOut(Easing.quad) }), -1, true);
-  }, [o]);
-  const style = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View style={[styles.caret, { backgroundColor: t.primary }, style]} />;
-}
-
-function UserMessage({ entry }: { entry: ChatEntry }) {
+function Message({ entry, lang }: { entry: ChatEntry; lang: Lang }) {
   const t = useTheme();
   const s = useT();
+  const mine = entry.role === 'user';
   return (
-    <Reveal style={{ gap: space.md }}>
-      <View style={[styles.userBubble, { backgroundColor: t.userBubble, borderColor: t.glassBorder }]}>
-        <Text selectable style={[type.body, { color: t.text }]}>
-          {entry.content}
+    <Reveal style={styles.msg}>
+      <View style={[styles.msgRule, { backgroundColor: mine ? t.line : t.signal }]} />
+      <View style={{ flex: 1, gap: space.sm }}>
+        <Text style={[type.labelSmall, { color: mine ? t.dim : t.signal }]}>{mine ? s.you : 'Kompass'}</Text>
+        <Text selectable style={[mine ? type.headline : type.body, { color: entry.failed ? t.signal : t.text }]}>
+          {mine ? entry.content : plainifyMarkdown(entry.content)}
+          {entry.streaming ? <Caret color={t.signal} /> : null}
         </Text>
-      </View>
-      {entry.emergency ? <EmergencyCallCard title={s.emergencyCallTitle} subtitle={s.emergencyCallBody} callLabel={s.callLabel} /> : null}
-    </Reveal>
-  );
-}
-
-function AssistantMessage({ entry, lang }: { entry: ChatEntry; lang: Lang }) {
-  const t = useTheme();
-  const s = useT();
-  const text = plainifyMarkdown(entry.content);
-  return (
-    <Reveal style={{ gap: space.sm }}>
-      <Glass radiusSize="lg" style={{ maxWidth: '94%' }}>
-        <View style={styles.answer}>
-          <View style={styles.answerHead}>
-            <BrandMark size={18} ring={false} />
-            <Text style={[type.caption, { color: t.primary, letterSpacing: 1.5, textTransform: 'uppercase' }]}>Kompass</Text>
+        {mine && entry.emergency ? <AlertBar text={s.emergencyCallTitle} /> : null}
+        {!mine && entry.sources && entry.sources.length > 0 && !entry.streaming ? (
+          <View style={styles.sources}>
+            <Text style={[type.labelSmall, { color: t.dim }]}>{s.basedOn}</Text>
+            {entry.sources.map((id) => {
+              const g = guideById(id);
+              return g ? (
+                <Press key={id} accessibilityRole="link" onPress={() => router.push({ pathname: '/guide/[id]', params: { id } })} scaleTo={0.96} style={[styles.sourceChip, { borderColor: t.signal }]}>
+                  <Icon name={g.icon} size={13} color={t.signal} strokeWidth={2} />
+                  <Text style={[type.labelSmall, { color: t.signal }]}>{g.content[lang].title}</Text>
+                </Press>
+              ) : null;
+            })}
           </View>
-          <Text selectable style={[type.body, { color: entry.failed ? t.danger : t.text }]}>
-            {text}
-            {entry.streaming ? ' ' : ''}
-            {entry.streaming ? <Caret /> : null}
-          </Text>
-        </View>
-      </Glass>
-      {entry.sources && entry.sources.length > 0 && !entry.streaming ? (
-        <View style={styles.sources}>
-          <Text style={[type.footnote, { color: t.muted }]}>{s.basedOn}</Text>
-          {entry.sources.map((id) => {
-            const g = guideById(id);
-            return g ? (
-              <Press key={id} accessibilityRole="link" onPress={() => router.push({ pathname: '/guide/[id]', params: { id } })} scaleTo={0.95}>
-                <Glass radiusSize="pill">
-                  <View style={styles.sourceChip}>
-                    <Icon name={g.icon} size={14} color={t.primary} strokeWidth={2} />
-                    <Text style={[font.bold, { color: t.primary, fontSize: 13 }]}>{g.content[lang].title}</Text>
-                  </View>
-                </Glass>
-              </Press>
-            ) : null;
-          })}
-        </View>
-      ) : null}
+        ) : null}
+      </View>
     </Reveal>
   );
 }
 
-function Chat() {
+export default function HomeScreen() {
   const t = useTheme();
   const s = useT();
   const lang = useLang();
+  const ai = useStore(aiStore);
   const { entries, draft } = useStore(chatStore);
-  const { busy } = useStore(aiStore);
+  const { degrees, position } = useSensors();
   const scroll = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    void ensureModel();
+  }, []);
+
+  const ready = ai.status === 'ready';
+  const canSend = ready && draft.trim().length > 0 && !ai.busy;
   const submit = (text: string) => void send(text, lang, s.modelError);
-  const canSend = draft.trim().length > 0;
+  const coords = position?.coords;
+  const hero = s.heroLines.split('|');
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        ref={scroll}
-        contentContainerStyle={styles.list}
-        onContentSizeChange={() => entries.length > 0 && scroll.current?.scrollToEnd({ animated: true })}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {entries.length === 0 ? (
-          <View style={{ gap: space.md }}>
-            <Reveal>
-              <Text style={[type.body, { color: t.muted, paddingHorizontal: space.xs }]}>{s.assistantGreeting}</Text>
-            </Reveal>
-            {SUGGESTIONS[lang].map((q, i) => (
-              <Reveal key={q.title} index={i + 1}>
-                <Press accessibilityRole="button" onPress={() => submit(q.prompt)}>
-                  <Glass radiusSize="lg">
-                    <View style={styles.suggestion}>
-                      <IconBadge name={q.icon} size={48} tone={i === 1 ? 'amber' : 'soft'} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[type.headline, { color: t.text, fontSize: 16 }]}>{q.title}</Text>
-                        <Text style={[type.footnote, { color: t.muted }]}>{q.detail}</Text>
-                      </View>
-                      <Icon name="chevronRight" size={18} color={t.faint} />
-                    </View>
-                  </Glass>
-                </Press>
+    <Screen>
+      <StatusStrip
+        left={aiStatusLabel(ai, s)}
+        rightStrong={coords ? `${coords.latitude.toFixed(2)}° ${coords.latitude >= 0 ? 'N' : 'S'}` : undefined}
+        right={coords ? `${Math.abs(coords.longitude).toFixed(2)}° ${coords.longitude >= 0 ? (lang === 'de' ? 'O' : 'E') : 'W'}` : undefined}
+      />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          ref={scroll}
+          contentContainerStyle={styles.list}
+          onContentSizeChange={() => entries.length > 0 && scroll.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {entries.length === 0 ? (
+            <>
+              <Reveal>
+                <Hero lines={hero} accent={1} style={{ marginTop: space.xxl }} />
+                <Body muted style={{ marginTop: space.md, maxWidth: 300 }}>
+                  {s.heroSub}
+                </Body>
               </Reveal>
-            ))}
-          </View>
-        ) : (
-          entries.map((e) => (e.role === 'user' ? <UserMessage key={e.id} entry={e} /> : <AssistantMessage key={e.id} entry={e} lang={lang} />))
-        )}
-        {entries.length > 0 ? (
-          <View style={styles.disclaimer}>
-            <Icon name="shield" size={14} color={t.faint} />
-            <Text style={[type.footnote, { color: t.faint, flex: 1 }]}>{s.aiDisclaimer}</Text>
-          </View>
-        ) : null}
-      </ScrollView>
+              <Reveal index={1} style={{ marginTop: space.xl }}>
+                <Hud
+                  cells={[
+                    { value: degrees == null ? '—' : `${Math.round(normalizeHeading(degrees))}°`, unit: degrees == null ? undefined : cardinal(degrees, lang), label: s.hudHeading },
+                    { value: coords?.altitude != null ? Math.round(coords.altitude).toLocaleString(lang) : '—', unit: coords?.altitude != null ? 'm' : undefined, label: s.hudAltitude },
+                    { value: coords ? `±${Math.round(coords.accuracy ?? 0)}` : '—', unit: coords ? 'm' : undefined, label: s.hudGps },
+                  ]}
+                />
+              </Reveal>
+              <Reveal index={2}>
+                <SectionLabel label={s.scenarios} style={{ marginTop: space.xl, marginBottom: space.md }} />
+                <View style={styles.grid}>
+                  <Tile title={s.tileEmergency} caption={s.tileEmergencySub} icon="phone" signal onPress={() => callEmergency()} />
+                  <Tile title={s.tileLost} caption={s.tileLostSub} icon="mountain" onPress={() => router.push({ pathname: '/guide/[id]', params: { id: 'lost' } })} />
+                  <Tile title={s.tileInjured} caption={s.tileInjuredSub} icon="heartPulse" onPress={() => router.navigate('/guides')} />
+                  <Tile title={s.tileTranslate} caption={s.tileTranslateSub} icon="translate" onPress={() => router.navigate('/translate')} />
+                </View>
+              </Reveal>
+            </>
+          ) : (
+            <>
+              <View style={styles.chatHead}>
+                <Text style={[type.display, { color: t.text }]}>{s.tabAssistant}</Text>
+                {!ai.busy ? (
+                  <Press accessibilityRole="button" accessibilityLabel={s.newChat} onPress={() => chatStore.set({ entries: [] })} style={[styles.square, { borderColor: t.line }]}>
+                    <Icon name="compose" size={18} color={t.text} />
+                  </Press>
+                ) : null}
+              </View>
+              {entries.map((e) => (
+                <Message key={e.id} entry={e} lang={lang} />
+              ))}
+              <Text style={[type.footnote, { color: t.dim, marginTop: space.sm }]}>{s.aiDisclaimer}</Text>
+            </>
+          )}
+        </ScrollView>
 
-      <View style={styles.composerWrap}>
-        <Glass radiusSize="xl" strong blur>
-          <View style={styles.composer}>
+        <View style={styles.composerWrap}>
+          {!ready ? (
+            <Press accessibilityRole="button" onPress={() => (ai.status === 'missing' || ai.status === 'error' ? router.navigate('/settings') : undefined)} style={{ marginBottom: space.sm }}>
+              <Text style={[type.labelSmall, { color: t.signal }]}>
+                {ai.status === 'missing' ? s.modelMissingTitle : ai.status === 'error' ? s.modelError : ai.status === 'unpacking' ? s.modelUnpacking : s.modelLoading}
+                {ai.progress > 0 && ai.progress < 1 && ai.status !== 'ready' ? `  ${Math.round(ai.progress * 100)}%` : ''}
+              </Text>
+              {ai.status === 'loading' || ai.status === 'unpacking' ? <ProgressRule value={ai.progress} /> : null}
+            </Press>
+          ) : null}
+          <View style={[styles.composer, { backgroundColor: t.surface, borderColor: t.line }]}>
+            <Text style={[font.display, { color: t.signal, fontSize: 24, lineHeight: 26 }]}>›</Text>
             <TextInput
               value={draft}
               onChangeText={(v) => chatStore.set({ draft: v })}
-              placeholder={s.assistantPlaceholder}
-              placeholderTextColor={t.faint}
+              placeholder={entries.length === 0 ? s.promptShort : s.assistantPlaceholder}
+              placeholderTextColor={t.dim}
               multiline
+              editable={ready}
               style={[styles.input, { color: t.text }]}
             />
-            <View style={styles.composerFoot}>
-              <Icon name="leaf" size={15} color={t.primary} />
-              <Text style={[type.footnote, { color: t.muted, flex: 1 }]}>{s.onDevice}</Text>
-              {busy ? (
-                <Press accessibilityRole="button" accessibilityLabel={s.stop} onPress={() => void stopGeneration()} scaleTo={0.92}>
-                  <LinearGradient colors={['#E8483A', '#C22D22']} style={styles.stop}>
-                    <Icon name="stop" size={14} color="#fff" />
-                    <Text style={[font.bold, { color: '#fff' }]}>{s.stop}</Text>
-                  </LinearGradient>
-                </Press>
-              ) : (
-                <Press accessibilityRole="button" accessibilityLabel={s.send} disabled={!canSend} onPress={() => submit(draft)} scaleTo={0.9}>
-                  <LinearGradient
-                    colors={canSend ? (t.scheme === 'dark' ? ['#5CE9AE', '#22B57E'] : ['#1F8F62', '#126244']) : [t.divider, t.divider]}
-                    style={styles.send}
-                  >
-                    <Icon name="arrowUp" size={22} color={canSend ? t.onPrimary : t.faint} strokeWidth={2.2} />
-                  </LinearGradient>
-                </Press>
-              )}
-            </View>
+            {ai.busy ? (
+              <Press accessibilityRole="button" accessibilityLabel={s.stop} onPress={() => void stopGeneration()} style={[styles.square, { backgroundColor: t.signal, borderColor: t.signal }]}>
+                <Icon name="stop" size={14} color={t.onSignal} />
+              </Press>
+            ) : (
+              <Press accessibilityRole="button" accessibilityLabel={s.send} disabled={!canSend} onPress={() => submit(draft)} style={[styles.square, { backgroundColor: canSend ? t.signal : 'transparent', borderColor: canSend ? t.signal : t.line }]}>
+                <Icon name="arrowUp" size={18} color={canSend ? t.onSignal : t.dim} strokeWidth={2.2} />
+              </Press>
+            )}
           </View>
-        </Glass>
-      </View>
-    </KeyboardAvoidingView>
-  );
-}
-
-export default function AssistantScreen() {
-  const t = useTheme();
-  const s = useT();
-  const { entries } = useStore(chatStore);
-  const { busy } = useStore(aiStore);
-  return (
-    <Screen>
-      <ScreenHeader
-        title={s.tabAssistant}
-        right={
-          entries.length > 0 && !busy ? (
-            <Press accessibilityRole="button" accessibilityLabel={s.newChat} onPress={() => chatStore.set({ entries: [] })} scaleTo={0.9}>
-              <Glass radiusSize="pill">
-                <View style={styles.headerButton}>
-                  <Icon name="compose" size={20} color={t.primary} />
-                </View>
-              </Glass>
-            </Press>
-          ) : null
-        }
-      />
-      <View style={styles.offlineWrap}>
-        <Glass radiusSize="pill">
-          <View style={styles.offline}>
-            <Icon name="cloudOff" size={16} color={t.primary} strokeWidth={2} />
-            <Text style={[font.bold, { color: t.primary, fontSize: 13 }]}>{s.offlineBadge}</Text>
-          </View>
-        </Glass>
-      </View>
-      <ModelGate>
-        <Chat />
-      </ModelGate>
+        </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  headerButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  offlineWrap: { paddingHorizontal: space.xl, alignItems: 'flex-start', marginTop: -space.sm, marginBottom: space.xs },
-  offline: { flexDirection: 'row', gap: space.sm, alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8 },
-  list: { padding: space.lg, gap: space.lg, paddingBottom: space.lg },
-  suggestion: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: 14 },
-  userBubble: {
-    alignSelf: 'flex-end',
-    maxWidth: '85%',
-    borderRadius: radius.lg,
-    borderBottomRightRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  answer: { padding: space.lg, gap: space.sm },
-  answerHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  caret: { width: 3, height: 16, borderRadius: 2, marginLeft: 2, transform: [{ translateY: 2 }] },
-  sources: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center' },
-  sourceChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space.md, paddingVertical: 7 },
-  disclaimer: { flexDirection: 'row', gap: 6, alignItems: 'center', paddingHorizontal: space.sm },
-  composerWrap: { paddingHorizontal: space.md, paddingBottom: TAB_BAR_SPACE - 10 },
-  composer: { paddingHorizontal: space.lg, paddingTop: space.sm },
-  input: { ...font.medium, minHeight: 44, maxHeight: 140, fontSize: 16, paddingVertical: space.sm },
-  composerFoot: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingBottom: space.sm, paddingTop: space.xs },
-  send: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-  stop: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, paddingHorizontal: space.lg, height: 42 },
+  list: { paddingHorizontal: space.xl, paddingBottom: space.lg },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  chatHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.lg, marginBottom: space.lg },
+  msg: { flexDirection: 'row', gap: 14, paddingVertical: space.md },
+  msgRule: { width: 2, borderRadius: 1 },
+  sources: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center', marginTop: space.xs },
+  sourceChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 6 },
+  composerWrap: { paddingHorizontal: space.xl, paddingTop: space.sm, paddingBottom: space.md },
+  composer: { minHeight: 58, borderWidth: 1, borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 16, paddingRight: 10 },
+  input: { ...font.body, flex: 1, fontSize: 16, maxHeight: 120, paddingVertical: 14 },
+  square: { width: 38, height: 38, borderWidth: 1, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
 });
+

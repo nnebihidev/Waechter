@@ -29,21 +29,24 @@ or before the model has loaded, the life-critical parts are still there.
 - No servers, accounts, licence checks or receipts. Purchase is handled by the store.
 - Chats are kept in memory only and never written to disk.
 
-## Design system
+## Design system — "Expedition"
 
-Glassmorphism over a living backdrop, light ("Morgennebel") and dark ("Nachtwald"):
+Instrument-panel look: near-black surfaces, warm off-white text and one signal colour
+(orange) that is both brand and emergency. A light "Tag" variant keeps the same
+structure on warm grey for direct sunlight. No cards: rules, grids and numbers.
 
-- `src/ui/theme.ts` — colour tokens, glass tokens (fill, edge, blur), Manrope type scale.
-- `src/ui/glass.tsx` — `Screen` (opaque root + aurora `Backdrop` with slowly drifting radial
-  blobs), `Glass` (blur + translucent fill + light edge + shadow), `Press` (spring scale),
-  `Reveal` (staggered slide-in), `Pulse` (expanding ring, used by SOS).
-- `src/ui/icons.tsx` — hand-drawn 24-grid stroke icon set and the compass-star brand mark.
-  Guide data still names Ionicons glyphs; `resolveIcon` maps them.
-- `src/components/TabBar.tsx` — floating frosted tab bar with a spring-driven pill.
-- Fonts: Manrope (OFL) bundled via `@expo-google-fonts/manrope`; loaded before the splash hides.
-- Motion: `react-native-reanimated` v4; every animation respects Reduce Motion.
-- Android: `Glass` skips the blur pass by default (`blur` prop opts in) because view blur is
-  costly inside long lists; the tab bar and composer keep it. Verify on a mid-range device.
+- `src/ui/theme.ts` — colour tokens and the type scale (Barlow Condensed for display,
+  numbers and labels; Manrope for body text). Both fonts are bundled (OFL).
+- `src/ui/kit.tsx` — building blocks: `Screen` (opaque root + contour-line texture),
+  `StatusStrip`, `Hero`, `Hud`, `Slab` (signal / ghost / neutral), `Tile`, `KvRow`,
+  `ListRow`, `Chip`, `AlertBar`, `Note`.
+- `src/ui/motion.tsx` — `Press` (hard scale), `Reveal` (fast stagger), `Breathe`, `Caret`.
+  Every animation respects Reduce Motion.
+- `src/ui/icons.tsx` — hand-drawn 24-grid stroke icon set and the compass-star mark.
+- `src/components/TabBar.tsx` — flat bar with a glowing signal marker that springs to
+  the active tab.
+- Compass (`tools.tsx`): SVG dial with 180 ticks, 30° numerals and cardinals; dial and
+  needle rotate together on a spring with unwrapped angles (359° → 1° turns 2°).
 
 ## Project layout
 

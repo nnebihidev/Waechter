@@ -124,7 +124,7 @@ export function Icon({
 /** Eight-point compass star — the Kompass mark. */
 export function BrandMark({ size = 28, color, ring = true }: { size?: number; color?: string; ring?: boolean }) {
   const t = useTheme();
-  const c = color ?? t.primary;
+  const c = color ?? t.signal;
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" accessibilityElementsHidden importantForAccessibility="no">
       {ring ? <Circle cx={16} cy={16} r={14.5} stroke={c} strokeWidth={1.2} opacity={0.35} /> : null}
@@ -135,7 +135,7 @@ export function BrandMark({ size = 28, color, ring = true }: { size?: number; co
         opacity={0.45}
         transform="rotate(45 16 16)"
       />
-      <Circle cx={16} cy={16} r={2} fill={t.scheme === 'dark' ? '#06110B' : '#FFFFFF'} />
+      <Circle cx={16} cy={16} r={2} fill={t.bg} />
     </Svg>
   );
 }

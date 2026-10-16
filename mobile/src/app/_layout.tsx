@@ -1,10 +1,5 @@
-import {
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-  useFonts,
-} from '@expo-google-fonts/manrope';
+import { BarlowCondensed_600SemiBold, BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed';
+import { Manrope_500Medium, Manrope_700Bold, useFonts } from '@expo-google-fonts/manrope';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
@@ -18,7 +13,7 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   const t = useTheme();
-  const [loaded] = useFonts({ Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
+  const [loaded] = useFonts({ BarlowCondensed_600SemiBold, BarlowCondensed_700Bold, Manrope_500Medium, Manrope_700Bold });
 
   useEffect(() => {
     if (loaded) void SplashScreen.hideAsync().catch(() => undefined);
@@ -27,16 +22,15 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   const base = t.scheme === 'dark' ? DarkTheme : DefaultTheme;
-  const bg = t.gradient[0] ?? '#000000';
-  const navTheme = { ...base, colors: { ...base.colors, background: bg, card: bg, primary: t.primary, text: t.text } };
+  const navTheme = { ...base, colors: { ...base.colors, background: t.bg, card: t.bg, primary: t.signal, text: t.text, border: t.line } };
 
   return (
     <SafeAreaProvider>
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
       <ThemeProvider value={navTheme}>
-        <Stack screenOptions={{ contentStyle: { backgroundColor: bg }, headerShown: false, animation: 'fade_from_bottom' }}>
+        <Stack screenOptions={{ contentStyle: { backgroundColor: t.bg }, headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="guide/[id]" options={{ animation: 'slide_from_right', animationDuration: 220 }} />
           <Stack.Screen name="signal" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         </Stack>
       </ThemeProvider>
