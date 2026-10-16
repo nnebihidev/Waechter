@@ -43,6 +43,15 @@ describe('guide search', () => {
     expect(pickReferences(hits)).toEqual([]);
   });
 
+  it('everyday chatter clears no reference at the stricter threshold, real topics do', () => {
+    const idx = indexFor(GUIDES, 'de');
+    for (const q of ['Wie bekomme ich einen Rotweinfleck aus dem Teppich?', 'Wie koche ich Reis ohne Reiskocher?', 'Wie lange hält eine Powerbank?']) {
+      expect(pickReferences(idx.search(q), 2, 4.5), q).toEqual([]);
+    }
+    expect(pickReferences(idx.search('Was mache ich bei Stromausfall?'), 2, 4.5)[0]?.id).toBe('power-outage');
+    expect(pickReferences(idx.search('Mein Freund atmet nicht'), 2, 2)[0]?.id).toBe('cpr');
+  });
+
   it('limits references to close matches', () => {
     const refs = pickReferences(indexFor(GUIDES, 'en').search('bleeding wound tourniquet'));
     expect(refs[0]?.id).toBe('bleeding');

@@ -48,6 +48,15 @@ structure on warm grey for direct sunlight. No cards: rules, grids and numbers.
 - Compass (`tools.tsx`): SVG dial with 180 ticks, 30° numerals and cardinals; dial and
   needle rotate together on a spring with unwrapped angles (359° → 1° turns 2°).
 
+## Chat feel
+
+`src/ui/chat.tsx`: `useSmoothText` reveals streamed tokens at a steady, backlog-aware pace
+(no stutter), a tiny tolerant Markdown renderer (`src/ui/markdown.ts`: headings, lists, bold,
+italic; unclosed markers stay literal while streaming), bouncing typing dots until the first
+token, a "jump to latest" control, and haptics (`expo-haptics`). The transcript is a
+`@shopify/flash-list` with `maintainVisibleContentPosition` (starts at the bottom, follows new
+content); the composer rides the keyboard via `react-native-keyboard-controller`.
+
 ## AI harness
 
 `src/ai/harness.ts` wraps every assistant turn. A deterministic classifier routes the message to

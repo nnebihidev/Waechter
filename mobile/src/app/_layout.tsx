@@ -5,6 +5,7 @@ import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { TERMS_VERSION } from '../legal/texts';
@@ -31,6 +32,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
+      <KeyboardProvider>
       <ThemeProvider value={navTheme}>
         <Stack screenOptions={{ contentStyle: { backgroundColor: t.bg }, headerShown: false, animation: 'fade' }}>
           <Stack.Protected guard={!accepted}>
@@ -44,6 +46,7 @@ export default function RootLayout() {
           <Stack.Screen name="legal" options={{ animation: 'slide_from_bottom' }} />
         </Stack>
       </ThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

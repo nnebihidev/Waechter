@@ -12,6 +12,12 @@
     "url": "https://github.com/expo/google-fonts/tree/master/font-packages/manrope#readme"
   },
   {
+    "name": "@shopify/flash-list",
+    "version": "2.0.2",
+    "license": "MIT",
+    "url": "https://shopify.github.io/flash-list/"
+  },
+  {
     "name": "Barlow Condensed (font)",
     "version": "",
     "license": "OFL-1.1",
@@ -58,6 +64,12 @@
     "version": "57.0.4",
     "license": "MIT",
     "url": "https://docs.expo.dev/versions/latest/sdk/font/"
+  },
+  {
+    "name": "expo-haptics",
+    "version": "57.0.3",
+    "license": "MIT",
+    "url": "https://docs.expo.dev/versions/latest/sdk/haptics/"
   },
   {
     "name": "expo-keep-awake",
@@ -148,6 +160,12 @@
     "version": "0.86.3",
     "license": "MIT",
     "url": "https://reactnative.dev/"
+  },
+  {
+    "name": "react-native-keyboard-controller",
+    "version": "1.21.9",
+    "license": "MIT",
+    "url": "https://kirillzyusko.github.io/react-native-keyboard-controller/"
   },
   {
     "name": "react-native-reanimated",
