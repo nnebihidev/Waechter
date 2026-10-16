@@ -57,7 +57,7 @@ const de: LegalTexts = {
   welcomeAccept: 'Verstanden, weiter',
   welcomeAcceptHint: 'Mit „Weiter" akzeptieren Sie die Nutzungsbedingungen und nehmen die Datenschutzhinweise zur Kenntnis.',
   welcomeRead: 'Nutzungsbedingungen lesen',
-  consentTitle: 'Einwilligungserklärung',
+  consentTitle: 'Einwilligungs\u00ADerklärung',
   consentParagraphs: [
     'Ich nutze Kompass als Informations- und Orientierungswerkzeug auf eigene Verantwortung.',
     'Mir ist bekannt, dass Kompass kein Medizinprodukt ist, keine Diagnosen stellt und keinen Notruf, keinen Arzt, keinen Rettungsdienst und keine Erste-Hilfe-Ausbildung ersetzt. Bei Lebensgefahr wähle ich zuerst den Notruf (112).',

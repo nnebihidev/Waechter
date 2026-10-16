@@ -8,7 +8,7 @@ das Ziel ist, Risiko und Angriffsfläche so klein wie möglich zu machen._
 
 | Maßnahme | Wo |
 | --- | --- |
-| Erststart-Zustimmung: vier Kernhinweise (112, KI kann irren, allgemeine Informationen, alles lokal), explizites „Verstanden, weiter", Zeitpunkt und Versionsnummer lokal gespeichert; bei neuer `TERMS_VERSION` erneut abgefragt | `src/app/welcome.tsx`, `src/state/settings.ts` |
+| Einwilligungserklärung beim ersten Start: vier Kernhinweise, formaler Erklärungstext (muss bis zum Ende gescrollt werden), drei Pflicht-Kästchen (AGB akzeptiert / keine medizinische Beratung, 112 / KI kann irren), Knopf erst danach aktiv; gespeichert mit Version, Zeitpunkt, angekreuzten Punkten und App-Version, nur lokal; Widerruf unter Mehr → Rechtliches sperrt die App wieder; bei neuer `TERMS_VERSION` erneut abgefragt | `src/app/welcome.tsx`, `src/state/settings.ts` |
 | Nutzungsbedingungen (DE/EN) mit Haftungsklausel nach deutschem AGB-Recht (unbeschränkt für Vorsatz, grobe Fahrlässigkeit, Leben/Körper/Gesundheit, ProdHaftG; sonst Kardinalpflichten, vorhersehbarer Schaden), KI-Transparenz (Art. 50 KI-VO), Sensor-Vorbehalt, Store als Vertragspartner, ODR-Hinweis | `src/legal/texts.ts`, in-App unter Mehr → Rechtliches |
 | Datenschutzhinweise (DE/EN) — keine Server, keine Verarbeitung außerhalb des Geräts | `src/legal/texts.ts`, `docs/PRIVACY.md` |
 | Impressum (§ 5 DDG, § 18 MStV) als Platzhalter | `src/legal/texts.ts` |

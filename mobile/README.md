@@ -50,8 +50,9 @@ structure on warm grey for direct sunlight. No cards: rules, grids and numbers.
 
 ## Legal
 
-First launch shows a consent screen (112, AI can be wrong, general information, all local);
-acceptance is stored locally with timestamp and `TERMS_VERSION`. Terms, privacy, imprint and
+First launch shows a declaration of consent: the text must be scrolled to the end and three
+mandatory boxes ticked before the app unlocks; the record (version, time, ticked ids, app
+version) is stored locally only and can be withdrawn under More → Legal. Terms, privacy, imprint and
 licences live in `src/legal/texts.ts` and `src/legal/licenses.json` (`npm run licenses`
 regenerates the latter). `tests/legal.test.ts` fails on guarantee or diagnosis wording anywhere
 in user-facing text. Publisher duties are listed in `docs/LEGAL-CHECKLIST.md`.

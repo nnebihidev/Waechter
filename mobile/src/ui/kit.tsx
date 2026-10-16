@@ -77,10 +77,10 @@ export function Hero({ lines, accent, style }: { lines: string[]; accent?: numbe
   );
 }
 
-export function Display({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+export function Display({ children, style, fit }: { children: ReactNode; style?: StyleProp<TextStyle>; fit?: boolean }) {
   const t = useTheme();
   return (
-    <Text accessibilityRole="header" style={[type.display, { color: t.text }, style]}>
+    <Text accessibilityRole="header" style={[type.display, { color: t.text }, style]} numberOfLines={fit ? 1 : undefined} adjustsFontSizeToFit={fit}>
       {children}
     </Text>
   );

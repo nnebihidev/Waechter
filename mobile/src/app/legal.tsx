@@ -46,7 +46,7 @@ export default function LegalScreen() {
         <Press accessibilityRole="button" accessibilityLabel="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} scaleTo={0.9} style={[styles.back, { borderColor: t.line }]}>
           <Icon name="chevronLeft" size={20} color={t.text} strokeWidth={2.2} />
         </Press>
-        <Display style={{ flex: 1, fontSize: 34, lineHeight: 36 }}>{titles[active]}</Display>
+        <Display style={{ flex: 1, fontSize: 34, lineHeight: 36 }} fit>{titles[active]}</Display>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={{ flexGrow: 0, height: 36 + 2 * space.md }}>
         {SECTIONS.map((s) => (
